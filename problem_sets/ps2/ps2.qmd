@@ -1,0 +1,42 @@
+---
+title: "Problem Set 2 Knitted"
+author: "Jiaxuan Liu"
+date: "2024-10-18"
+format:
+  html: default
+  pdf: default
+---
+
+
+# Problem Set 2 Report
+
+## Introduction
+1. “This submission is my work alone and complies with the 30538 integrity policy.” Add your initials to indicate your agreement: **JL**
+2. “I have uploaded the names of anyone I worked with on the problem set here” asdgla ;sdgnawe;oe
+3. Late coins used this pset: **__** Late coins left after submission: **__**
+
+## Q1: Counting NA values
+For each column, how many rows are NA? Write a function that returns a two-column DataFrame where each row is a variable, the first column of the DataFrame is the name of each variable, and the second column of the DataFrame is the number of times that the column is NA. 
+
+### Importing the dataset
+```{python}
+import matplotlib.pyplot as plt
+import jupyter
+import pandas as pd
+
+# File path for the parking tickets dataset
+file_path = '/Users/doudouliu/Desktop/python 2/student30538/problem_sets/ps2/data/parking_tickets_one_percent.csv'
+
+# Reading the CSV file
+df = pd.read_csv(file_path)
+
+# Display first few rows to ensure the dataset is loaded correctly
+print(df.head())
+```
+
+#Q1a, How many NAs
+```{python}
+# Function to count NAs for each column
+Nna = df.isna().sum()
+print(Nna)
+```
