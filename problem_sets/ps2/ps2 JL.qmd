@@ -10,15 +10,16 @@ format:
 
 # Problem Set 2 Report
 
-## Introduction
+# Introduction
 1. “This submission is my work alone and complies with the 30538 integrity policy.” Add your initials to indicate your agreement: **JL**
 2. “I have uploaded the names of anyone I worked with on the problem set here” asdgla ;sdgnawe;oe
-3. Late coins used this pset: **__** Late coins left after submission: **__**
+3. Late coins used this pset: **_1_**
 
-## Q1: Counting NA values
+# Data cleaning continued
+# Q1: Counting NA values by defining function
 For each column, how many rows are NA? Write a function that returns a two-column DataFrame where each row is a variable, the first column of the DataFrame is the name of each variable, and the second column of the DataFrame is the number of times that the column is NA. 
 
-### Importing the dataset
+# Importing the dataset
 ```{python}
 import matplotlib.pyplot as plt
 import jupyter
@@ -34,9 +35,443 @@ df = pd.read_csv(file_path)
 print(df.head())
 ```
 
-#Q1a, How many NAs
+# How many NAs
 ```{python}
-# Function to count NAs for each column
-Nna = df.isna().sum()
-print(Nna)
+def Nna(df):
+  na_N = df.isna().sum().reset_index()  # convert to DataFrame format with NA counts
+  na_N.columns = ['variable', 'na_count']  # rename columns
+  return na_N
+
+print (Nna(df))
+```
+
+# Q2 Three variables are missing much more frequently than the others. Why? (Hint: look at some rows and read the data dictionary written by ProPublica)
+
+# Hearing_disposition has a missing vlaue of 259899, given that the contested tickets that got taken to the court and make it further to the hearing stage is rare, most tickets are either not contested or got resolved earlier, the large number of missing values make sense.
+
+# Notice_level has a missing value of 84068, given that this column measures the tickets number that reaches the final stage (i.e. breaching, violating), the tickets that are paid off or dismissed takes up the majority of all tickets, which justify the large number of na.
+
+# zipcode takes up 54115 missing values, this is due to the data collection process, given the limitation of technology to track to location of entries. 
+
+# Q3
+```{python}
+import bs4
+import requests
+from bs4 import BeautifulSoup
+import re
+
+url = 'https://www.chicago.gov/city/en/depts/fin/provdrs/parking_and_redlightcitationadministration/supp_info/ParkingStandingandComplianceViolations.html'
+
+seed = requests.get(url)
+soup = BeautifulSoup(seed.text, 'html.parser')
+table = soup.find('table')
+rows = table.find_all('tr')
+
+
+for row in rows:
+    # Extract columns for each row
+    cols = row.find_all('td')
+    cols_text = [col.text.strip() for col in cols]
+    
+    # Check if any column contains the word 'sticker'
+    if any('sticker' in col.lower() for col in cols_text):
+        print(cols_text)
+```
+# By scraping the table, we have Code 9-64-125 for old sticker misplacement or missing as the violation code, the new violation code is Code 9-64-125(b), which differentiate the penalities by the weight of vehicle
+
+# Q4
+```{python}
+url = 'https://www.propublica.org/article/chicago-vehicle-sticker-law-ticket-price-hike-black-drivers-debt'
+
+seed = requests.get(url)
+soup = BeautifulSoup(seed.text, 'html.parser')
+
+paragraphs = soup.find_all('p')
+
+text = soup.get_text()
+numbers = re.findall(r'\b\d+\b', text)
+
+# locate all the numbers in the same line with buzz words like "violation", "fine"
+for p in paragraphs:
+    text = p.get_text()
+    if "violation" in text.lower() or "code" in text.lower() or "sticker" in text.lower() and "budget" in text.lower():
+        print(text)
+        # Find and print numbers in the paragraph
+        paragraph_numbers = re.findall(r'\b\d+\b', text)
+        if paragraph_numbers:
+            print(f"Numbers found: {paragraph_numbers}")
+
+```
+# After anchoring for key words like "violation" and "sticker", we can locate the paragraph which indicates that the old sticker price and the new are 120 and 200 (or 250, depending on the weight, but we don't have to worry about that) respectively.
+
+
+# Revenue increase from “missing city sticker” tickets
+# Q1
+
+```{python}
+#check the format
+df['violation_code'].unique()
+df.head()
+
+# the codes are stored as numeric value instead of string, so no "-" or "()" are shown as denoted in the official website
+# 0964125', '0964125B are not combined in one value "0964125_combined"
+def combine_violation_codes(code):
+    if code in ['0964125', '0964125B']:
+        return '0964125_combined'
+    return code
+
+df['violation_code_combined'] = df['violation_code'].apply(combine_violation_codes)
+
+df.head()
+
+#Now collapse the new created value, first we need to convert datatime format
+df['issue_date'] = pd.to_datetime(df['issue_date'])
+df_sticker = df[df['violation_code_combined'] == '0964125_combined']
+
+monthly_ticket = df_sticker.resample('M', on='issue_date').size().reset_index(name='count_of_combined_violations') #group by monthes
+print (monthly_ticket)
+
+#ALtiar plotting
+import altair as alt
+chart = alt.Chart(monthly_ticket).mark_line().encode(
+    x='issue_date:T',  # Time on the x-axis from 'monthly_ticket'
+    y='count_of_combined_violations:Q',  # Quantitative count on the y-axis from 'monthly_ticket'
+    tooltip=['issue_date:T', 'count_of_combined_violations:Q']  # Tooltip for more details on hover
+).properties(
+    title='Number of Combined Violation Tickets Over Time'
+)
+
+chart.show()
+```
+
+# Q2
+# after reseraching stack overflow, the relevant help page is Altair Axis Document. We are essentially creatnig another altair chart with a more precise x-axis label
+```{python}
+import altair as alt
+
+# Create an Altair line chart with customized x-axis date labels
+chart = alt.Chart(monthly_ticket).mark_line().encode(
+    x=alt.X('issue_date:T', 
+            axis=alt.Axis(
+                format='%Y-%m',  #high light Year-Month
+                labelAngle=-45,  # rotate labels for better fit
+                tickCount='month'  
+            )),
+    y='count_of_combined_violations:Q',
+    tooltip=['issue_date:T', 'count_of_combined_violations:Q']
+).properties(
+    title='Number of Combined Violation Tickets Over Time with Custom Date Labels'
+)
+
+chart.show()
+
+```
+
+Q3
+# Given that the increase in the penality happen in year 2012, the increase in revenue for each ticket is 80 dollars (200 - 120), and the sample is 1% of the population, we can calculate the following. The increase in revenue should be $15,360,000
+```{python}
+# Given the increase in the vehicle city sticker violation fine in Chicago occurred in 2012, we would first need to set the cut-off and filter data
+year_begin = '2011-02-24'  
+Year_end = '2012-02-24'
+
+df_before_after = df_sticker[(df_sticker['issue_date'] >= year_begin) & (df_sticker['issue_date'] <= Year_end)]
+
+#we then count the number in the filter data
+tickets_1p = df_before_after.shape[0]
+
+# scale up by 100 to infer population tickets
+tickets_100p = tickets_1p * 100
+
+# The increase in price is 200-120 = 80
+revenue_increase = tickets_100p * 80
+
+print(f"Revenue increase from new penality is ${revenue_increase:,}")
+```
+
+# Q4
+# The wording of this question is a little vague, but from what i understand, the denominator of the repayment rate is the numbeR of tickets with both some partial payments and those that are paid up. The following operation is base on this assumption.
+# The repayment rate drops from 49.08% to 43.37%.
+
+```{python}
+# Filter tickets between 2012-02-25 and 2013-02-25
+year_after = df_sticker[(df_sticker['issue_date'].dt.date.between(pd.to_datetime('2012-02-25').date(), pd.to_datetime('2013-02-25').date()))]
+
+# For year_1 (2012)
+paid_ticket_1 = year_after[year_after['total_payments'] > 0]  # filter tickets with payments made
+total_tickets_after = year_after['ticket_number'].nunique()  # total tickets issued before increase in penalty
+total_paid_tickets_after = paid_ticket_1['ticket_number'].nunique()  # total paid tickets
+repayment_rate_after = total_paid_tickets_after / total_tickets_after  # repayment rate
+
+# Print repayment rates
+print(f"Repayment Rate for 2012-13 (After Price Increase): {repayment_rate_after * 100:.2f}%")
+
+# For year_0 (2011)
+year_before = df_sticker[(df_sticker['issue_date'].dt.date.between(pd.to_datetime('2011-02-25').date(), pd.to_datetime('2012-02-25').date()))]
+
+paid_ticket_0 = year_before[year_before['total_payments'] > 0]
+
+total_tickets_before = year_before['ticket_number'].nunique() 
+
+total_paid_tickets_before = paid_ticket_0['ticket_number'].nunique()
+
+repayment_rate_before = total_paid_tickets_before / total_tickets_before
+
+print(f"Repayment Rate for 2011-12 (After Price Increase): {repayment_rate_before * 100:.2f}%")
+```
+
+# Q5
+# As shown in the graph, there is a clear decline following the policy change marked by the red vertical line on February 15, 2012. Before the policy, repayment rates hovered around 55%, but after 2012, there was a significant drop, with rates steadily decreasing to below 20% by 2018. This sharp decline suggests that the policy change, likely involving a price increase, negatively impacted people's ability or willingness to pay, resulting in much lower repayment rates over time.
+
+# The plot demonstrates the imporant concept in class, how the scale of one graph can be changed to give different impressions to the reader. In Q4, when I first saw the numeric change in the repayment rate, it does not appear striking; however after adjusting for the scale of Y-axis. We get this utterly steep curve.
+```{python}
+# Filter data and calculate repayment rates for every year
+df_filtered = df_sticker[(df_sticker['issue_date'].dt.year >= 2007) & (df_sticker['issue_date'].dt.year <= 2018)]
+df_filtered['year'] = df_filtered['issue_date'].dt.year
+repayment_rates = df_filtered.groupby('year').apply(lambda x: (x[x['total_payments'] > 0]['ticket_number'].nunique() / x['ticket_number'].nunique()) * 100)
+
+# Plot with connected dots
+plt.grid(True)
+plt.plot(repayment_rates.index, repayment_rates.values, color='lightblue', marker='o', label='Repayment Rate')
+plt.axvline(x=2012, color='red', linestyle='--', label='Policy Change (Feb 15, 2012)')
+plt.xlim(2006, 2019)
+plt.xlabel('Year'); plt.ylabel('Repayment Rate (%)'); plt.title('Repayment Rates (2007-2018)')
+plt.legend(); plt.tight_layout(); plt.show()
+
+
+```
+
+# Q6 
+# Based on the column ranking, which represents the product of repayment rate and the number of tickets—a simple measure that captures both aspects of revenue generation—the top three recommendations are Expired Plates or Temporary Registration, PARKING/STANDING PROHIBITED ANYTIME and RUSH HOUR PARKING
+```{python}
+# Group by violation type, calculate the number of tickets and repayment rate for each
+
+df_grouped = df.groupby(['violation_code', 'violation_description']).apply(
+    lambda x: x['ticket_number'].nunique() * (x[x['total_payments'] > 0]['ticket_number'].nunique() / x['ticket_number'].nunique())
+).reset_index(name='product')
+
+# Sort to find the top three violation types based on potential revenue (product)
+top_violations = df_grouped.sort_values(by='product', ascending=False).head(3)
+
+top_violations[['violation_code', 'violation_description', 'product']]
+```
+
+Headlines and sub-messages
+# Q1
+# Make a dataframe for violation description, fraction of payment time, average level 1 fine 
+# The top 5 are EXPIRED PLATES OR TEMPORARY REGISTRATION, STREET CLEANING, RESIDENTIAL PERMIT PARKING, EXP. METER NON-CENTRAL BUSINESS DISTRICT, PARKING/STANDING PROHIBITED ANYTIME
+
+```{python}
+df.head()
+import pandas as pd
+
+#Group by description
+grouped = df.groupby('violation_description').agg(
+    fraction_tickets_paid=('total_payments', lambda x: (x > 0).mean()),
+    avg_fine_level1=('fine_level1_amount', 'mean'),
+    total_tickets=('violation_description', 'size')
+).reset_index()
+
+# Rank from high to low
+sorted_df = grouped.sort_values('total_tickets', ascending=False)
+
+#top 5 and print
+top_5_violations = sorted_df.head(5)
+print(top_5_violations)
+```
+
+# Q2
+```{python}
+df_100 = df.groupby('violation_description').filter(lambda x: len(x) >= 100)
+
+grouped2 = df_100.groupby('violation_description').agg(
+    fraction_tickets_paid=('total_payments', lambda x: (x > 0).mean()),
+    avg_fine_level1_2=('fine_level1_amount', lambda x: (x + df_100.loc[x.index, 'fine_level2_amount']).mean()),
+    total_tickets=('violation_description', 'size')
+).reset_index()
+
+print(grouped2)
+
+#Drop the outlier
+max_2 = grouped2['avg_fine_level1_2'].max()
+print (max_2) #1455.34
+grouped2 = grouped2[grouped2['avg_fine_level1_2'] != max_2]
+
+#create scatter and print
+plt.figure(figsize=(8, 6))
+plt.scatter(grouped2['avg_fine_level1_2'], grouped2['fraction_tickets_paid'], color='blue')
+plt.title('Scatter Plot: Avg Fine Level vs. Fraction of Tickets Paid')
+plt.xlabel('Average Fine Level 1 & 2')
+plt.ylabel('Fraction of Tickets Paid')
+plt.grid(True)
+plt.show()
+
+#Alternative 1: Bar Plot
+# Create bins for avg_fine_level1_2
+grouped2['fine_bins'] = pd.cut(grouped2['avg_fine_level1_2'], bins=5)
+
+# Group by bins and get the mean of the fraction of tickets paid
+bin_group = grouped2.groupby('fine_bins').agg(
+    avg_fraction_paid=('fraction_tickets_paid', 'mean'),
+    count=('violation_description', 'size')  # Count the number of violations in each bin
+).reset_index()
+
+# Create the bar plot
+plt.figure(figsize=(8, 6))
+plt.bar(bin_group['fine_bins'].astype(str), bin_group['avg_fraction_paid'], color='green')
+plt.title('Bar Plot: Average Fraction of Tickets Paid by Fine Bins')
+plt.xlabel('Fine Level Bins')
+plt.ylabel('Average Fraction of Tickets Paid')
+plt.xticks(rotation=45)
+plt.grid(True)
+plt.show()
+
+#Alternative 2: Box plot
+# Create bins for avg_fine_level1_2 to use as categories in the box plot
+grouped2['fine_bins'] = pd.cut(grouped2['avg_fine_level1_2'], bins=5)
+
+# Create the box plot
+plt.figure(figsize=(8, 6))
+grouped2.boxplot(column='fraction_tickets_paid', by='fine_bins', grid=True)
+plt.title('Box Plot: Distribution of Fraction of Tickets Paid by Fine Levels')
+plt.suptitle('')  # Remove the automatic subtitle
+plt.xlabel('Fine Level Bins')
+plt.ylabel('Fraction of Tickets Paid')
+plt.xticks(rotation=45)
+plt.grid(True)
+plt.show()
+
+#In my opinion, the scatter plot is the most effective of the three for demonstration purposes, as it provides a more comprehensive and aggregate view of the data. The other two plots, while useful, are susceptible to the issue we discussed in the lecture — the arbitrariness of bin widths or categories. Deciding how to break down the data in a meaningful way requires further guidance to avoid introducing bias or misinterpretation
+```
+
+# Understanding the structure of the data and summarizing it
+# Q1
+
+```{python}
+# Filter for violations where the fine increases by less than double
+df_non_double = df_100[df_100['fine_level2_amount'] < 2 * df_100['fine_level1_amount']]
+
+# Calculate the increase (percentage or absolute) between fine levels
+df_non_double['increase'] = (df_non_double['fine_level2_amount'] - df_non_double['fine_level1_amount']) / df_non_double['fine_level1_amount']
+
+# Keep only violation_description and the calculated increase
+df_non_double_selected = df_non_double[['violation_description', 'increase']]
+
+# Print the result
+print(df_non_double_selected)
+```
+
+```{python}
+import networkx as nx
+
+# Create a graph for Notice Level Diagram
+notice_graph = nx.DiGraph()
+
+# Add nodes and edges for notice level progression
+notice_graph.add_edges_from([
+    ('Initial Notice', 'Second Notice'),
+    ('Second Notice', 'Final Notice'),
+    ('Contested', 'Not Liable'),
+])
+
+# Add the conditional path if the ticket is contested and found not liable
+notice_graph.add_edge('Second Notice', 'Contested')
+
+# Create a graph for Ticket Queue Diagram
+ticket_graph = nx.DiGraph()
+
+# Add nodes and edges for ticket queue progression
+ticket_graph.add_edges_from([
+    ('Issued', 'Unpaid'),
+    ('Unpaid', 'Collections'),
+    ('Contested', 'Not Liable'),
+    ('Issued', 'Contested'),
+    ('Unpaid', 'Paid'),
+])
+
+# Plot Notice Level Diagram
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+nx.draw(notice_graph, with_labels=True, node_color='lightblue', node_size=2000, font_size=10, font_weight='bold', arrows=True, pos=nx.spring_layout(notice_graph))
+plt.title("Notice Level Diagram")
+
+# Plot Ticket Queue Diagram
+plt.subplot(1, 2, 2)
+nx.draw(ticket_graph, with_labels=True, node_color='lightgreen', node_size=2000, font_size=10, font_weight='bold', arrows=True, pos=nx.spring_layout(ticket_graph))
+plt.title("ticket queue Diagram")
+```
+
+# Q3: Resorted help from StackOverflow and Chat GPT
+# a
+```{python}
+
+# Get the top 10 most common violation descriptions
+top_violations = grouped2['violation_description'].value_counts().nlargest(10).index
+
+# Create a new column to classify violations
+grouped2['violation_category'] = grouped2['violation_description'].apply(
+    lambda x: x if x in top_violations else 'Other'
+)
+
+# Filter for distinct categories for coloring
+unique_categories = grouped2['violation_category'].unique()
+
+# Define a color map for each category
+colors = plt.cm.get_cmap('tab10', len(unique_categories))
+
+# Create the scatter plot with labeled dots
+plt.figure(figsize=(8, 6))
+for i, category in enumerate(unique_categories):
+    subset = grouped2[grouped2['violation_category'] == category]
+    plt.scatter(subset['avg_fine_level1_2'], subset['fraction_tickets_paid'], label=category, color=colors(i))
+
+# Add labels for the top 10 violations
+for i in range(len(grouped2)):
+    row = grouped2.iloc[i]
+    if row['violation_category'] != 'Other':
+        plt.text(row['avg_fine_level1_2'], row['fraction_tickets_paid'], row['violation_description'], fontsize=8)
+
+# Add title, labels, and legend
+plt.title('Scatter Plot: Avg Fine Level vs. Fraction of Tickets Paid')
+plt.xlabel('Average Fine Level 1 & 2')
+plt.ylabel('Fraction of Tickets Paid')
+plt.grid(True)
+plt.legend(title='Violation Description', bbox_to_anchor=(1.05, 1), loc='upper left')
+
+plt.show()
+```
+
+# b 
+```{python}
+# Define broader categories for similar violations
+def categorize_violation(description):
+    if 'parking' in description.lower():
+        return 'Parking Violation'
+    elif 'expired' in description.lower() or 'meter' in description.lower():
+        return 'Expired Meter'
+    elif 'loading' in description.lower():
+        return 'Loading Zone Violation'
+    else:
+        return 'Other'
+
+# Apply the function to categorize violations
+grouped2['violation_category'] = grouped2['violation_description'].apply(categorize_violation)
+
+# Get unique categories for coloring
+unique_categories = grouped2['violation_category'].unique()
+
+# Create a scatter plot with different colors for each category
+plt.figure(figsize=(8, 6))
+for i, category in enumerate(unique_categories):
+    subset = grouped2[grouped2['violation_category'] == category]
+    plt.scatter(subset['avg_fine_level1_2'], subset['fraction_tickets_paid'], label=category, color=colors(i))
+
+# Add title, labels, and legend
+plt.title('Scatter Plot: Avg Fine Level vs. Fraction of Tickets Paid (Categorized)')
+plt.xlabel('Average Fine Level 1 & 2')
+plt.ylabel('Fraction of Tickets Paid')
+plt.grid(True)
+plt.legend(title='Violation Category', bbox_to_anchor=(1.05, 1), loc='upper left')
+
+plt.show()
+
 ```
