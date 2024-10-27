@@ -1,0 +1,52 @@
+---
+title: "Kickoff "
+author: "Peter Ganong and Maggie Shi"
+date: October 21, 2024
+date-format: long
+format: 
+    beamer:
+        aspectratio: 169
+        theme: default
+        header-includes: \renewcommand{\tightlist}{\setlength{\itemsep}{3ex}\setlength{\parskip}{0pt}}
+            \setbeamertemplate{footline}[frame number]
+            \usepackage{fvextra}
+            \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+            \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,commandchars=\\\{\}}
+---
+
+## Attendance
+* We are switching over to taking attendance via Canvas seating chart tool - no sign-in sheet!
+* Make it harder for me to miss you: 
+\vspace{2ex}
+    * Come on time
+    * Stay in approx. the same seat
+    * Use your name tent
+    * Submit a MUD card
+
+## Problem Sets
+* Two problem sets released today
+* PS3: Git -- due 10/26
+\vspace{2ex}
+    * Half solo, half paired
+    * Should be shorter than PS1 and PS2
+* PS4: Spatial -- due **11/2**
+\vspace{2ex}
+    * Paired, but longer
+    * First 2 out of 5 sections is just data cleaning -- highly recommend you get started this week
+* _Heads up: M sections reporting issues with Github Classroom for the PS3 paired section (last 10 points). We are troubleshooting and will have solution by EOD_
+
+## MUD
+* *When to winsorize?* When you have an observation which has reasonable values for almost all variables, but is an extreme outlier for just one variable.
+\vspace{2ex}
+    * Regression: you want to include that observation but don't want the estimates to be affected by the outlier
+    \vspace{2ex}
+        * If you set that cell to NA, the entire observation drops out of the regression.
+    *  Summary statistics: you want to report the same number of observations across all your descriptive statistics
+    \vspace{2ex}
+        * If you set that cell to NA, your summary statistic for that variable will have fewer observations than for the other variables.
+    * Often used for variables that extreme extreme skewness: income, stock returns, real estate prices, healthcare costs 
+    
+## Tech Tip
+* Something that came up in troubleshoot for one of the TAs: knitting errors could look different when knitting to PDF. 
+* To keep these errors, add `keep-tex: true`  in the QMD YAML to help debug these errors
+

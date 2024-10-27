@@ -1,0 +1,663 @@
+---
+title: "Visualization (Scales and Guides)"
+author: "Peter Ganong and Maggie Shi"
+date: today
+date-format: long
+format: 
+    html:
+        echo: true
+        toc: true
+        eval: true
+---
+<!--
+    beamer:
+        echo: true
+        eval: true
+        aspectratio: 169
+        theme: default
+        toc: true
+        header-includes: \renewcommand{\tightlist}{\setlength{\itemsep}{5ex}\setlength{\parskip}{0pt}}
+            \setbeamertemplate{footline}[frame number] 
+            -->
+
+# Intro to "Scales, Axes and Legends" Ch 4
+
+## roadmap
+
+* define scales and guides
+* load and explain dataset
+
+(no summary at end because slides are self-contained)
+
+## scales and guides
+
+"Visual encoding mapping data to visual variables such as position, size, shape, or color is the beating heart of data visualization."
+
+Two steps:
+
+1. *scale*: a function that takes a data value as input (the scale *domain*) and returns a visual value, such as a pixel position or RGB color, as output (the scale *range*). 
+2. *guide*: that allow readers to decode the graphic. Two types:
+    * *axes* which visualize scales with spatial ranges 
+    * *legends* which visualize scales with color, size, or shape ranges
+
+## Dataset for this lecture
+
+* Each row: a type of bacteria
+* Each column: a type of antibiotic
+* Each value: *minimum inhibitory concentration (MIC)* the concentration of antibiotic (in micrograms per milliliter) required to prevent growth in vitro. Lower values means antibiotic is more effective
+* There are two other columns with the genus of the bacteria and the response to a lab procedure called "gram staining". We will come back to these later.
+
+
+Research questions 
+
+1. How does effective is neomycin against different types of bacteria?
+2. How does neomycin compare to other antibiotics, such as streptomycin and penicillin?
+3. For which types of bacteria are neomycin and penicillin effective?
+
+
+```{python}
+import pandas as pd
+import altair as alt
+```
+
+```{python}
+#| eval: false
+antibiotics = 'https://cdn.jsdelivr.net/npm/vega-datasets@1/data/burtin.json'
+pd.read_json(antibiotics)
+```
+
+```{python}
+#| echo: false
+antibiotics = pd.read_json('data/burtin.json')
+```
+
+```{python}
+antibiotics[['Bacteria', 'Penicillin', 'Streptomycin', 'Neomycin']].head()
+```
+
+
+* Discussion questions: 1) are these data "tidy"? 2) if no, how would you tidy them?
+
+# Configuring Scales and Axes
+
+## Configuring Scales and Axes: roadmap
+
+* manipulate `alt.Scale()`
+* clarify the meaning implied by an axis
+* change the length (`domain`) of an axis
+* change grid lines via `alt.Axis()`
+
+## Plotting Antibiotic Resistance: Adjusting the Scale Type
+
+Default scale is linear
+```{python}
+alt.Chart(antibiotics).mark_circle().encode(
+    alt.X('Neomycin:Q')
+)
+```
+
+Why is this plot hard to read?
+
+
+## alt scale I
+```{python}
+alt.Chart(antibiotics).mark_circle().encode(
+    alt.X('Neomycin:Q',
+          scale=alt.Scale(type='sqrt'))
+)
+```
+
+
+## alt scale II
+```{python}
+alt.Chart(antibiotics).mark_circle().encode(
+    alt.X('Neomycin:Q',
+          scale=alt.Scale(type='log'))
+)
+```
+
+What does this plot do well? What is confusing about it?
+
+
+## Styling an Axis
+
+* Lower dosages indicate higher effectiveness. However, many readers will expect values that are "better" to be "up and to the right" within a chart. 
+* If we want to cater to this convention set the encoding `sort` property to `'descending'`:
+
+```{python}
+alt.Chart(antibiotics).mark_circle().encode(
+    alt.X('Neomycin:Q',
+          sort='descending',
+          scale=alt.Scale(type='log'))
+)
+```
+
+## add a clarifying title
+```{python}
+alt.Chart(antibiotics).mark_circle().encode(
+    alt.X('Neomycin:Q',
+          sort='descending',
+          scale=alt.Scale(type='log'),
+          title='← Less effective --- Neomycin MIC (μg/ml) --- more effective →')
+)
+```
+
+Editorial remark: the textbook suggests a title of "Neomycin MIC (μg/ml, reverse log scale)". This is accurate, but I don't know it helps the reader that much. 
+
+1. The fact that it is a log scale is self-evident. So is the fact that it is reversed.
+2. What the reader really wants to know is which direction is "good". Just tell them that directly.
+
+## Comparing Antibiotics: Adjusting Grid Lines, Tick Counts, and Sizing
+
+_How does neomycin compare to streptomycin?_
+
+Question for the class: what does each point repesent and what is being plotted? What is the headline message of this graph?
+
+
+```{python}
+alt.Chart(antibiotics).mark_circle().encode(
+    alt.X('Neomycin:Q',
+          sort='descending',
+          scale=alt.Scale(type='log'),
+          title='← Less effective --- Neomycin MIC (μg/ml) --- more effective →'),
+    alt.Y('Streptomycin:Q',
+          sort='descending',
+          scale=alt.Scale(type='log'),
+          title='← Less effective --- Streptomycin MIC (μg/ml) --- more effective →')
+)
+```
+
+
+
+
+
+_How does neomycin compare to penicillin?_
+
+
+```{python}
+alt.Chart(antibiotics).mark_circle().encode(
+    alt.X('Neomycin:Q',
+          sort='descending',
+          scale=alt.Scale(type='log'),
+          title='← Less effective --- Neomycin MIC (μg/ml) --- more effective →'),
+    alt.Y('Penicillin:Q',
+          sort='descending',
+          scale=alt.Scale(type='log'),
+          title='← Less effective --- Penicillin MIC (μg/ml) --- more effective →')
+)
+```
+
+Now we see a more differentiated response: some bacteria respond well to neomycin but not penicillin, and vice versa!
+
+## fix `domain`, equalize aspect ratio
+
+While this plot is useful, we can make it better. The x and y axes use the same units, but have different extents (the chart width is larger than the height) and different domains (0.001 to 100 for the x-axis, and 0.001 to 1,000 for the y-axis).
+
+```{python}
+alt.Chart(antibiotics).mark_circle().encode(
+    alt.X('Neomycin:Q',
+          sort='descending',
+          scale=alt.Scale(type='log', domain=[0.001, 1000]),
+          title='← Less effective --- Neomycin MIC (μg/ml) --- more effective →'),
+    alt.Y('Penicillin:Q',
+          sort='descending',
+          scale=alt.Scale(type='log', domain=[0.001, 1000]),
+          title='← Less effective --- Penicillin MIC (μg/ml) --- more effective →')
+).properties(width=250, height=250)
+```
+
+
+## reduce grid clutter with `alt.Axis(tickCount=5)`
+Also set `mark_circle(size=80)`
+```{python}
+alt.Chart(antibiotics).mark_circle(size=80).encode(
+    alt.X('Neomycin:Q',
+          sort='descending',
+          scale=alt.Scale(type='log', domain=[0.001, 1000]),
+          axis=alt.Axis(tickCount=5),
+          title='← Less effective --- Neomycin MIC (μg/ml) --- more effective →'),
+    alt.Y('Penicillin:Q',
+          sort='descending',
+          scale=alt.Scale(type='log', domain=[0.001, 1000]),
+          axis=alt.Axis(tickCount=5),
+          title='← Less effective --- Penicillin MIC (μg/ml) --- more effective →')
+).properties(width=250, height=250)
+```
+
+Some bacteria respond well to neomycin but not penicillin, and vice versa. Discussion question: what further questions does this plot raise?
+
+ 
+## choosing axis ticks (recap from lecture 4)
+```{python}
+alt.data_transformers.disable_max_rows() # Needed because len(df) > 5000
+from plotnine.data import diamonds
+
+diamonds_small = diamonds.loc[diamonds['carat'] < 2.1] # Subset to small diamonds
+
+alt.Chart(diamonds_small).mark_bar().encode(
+    alt.X('carat', bin=alt.BinParams(step=0.01)),
+    alt.Y('count()')
+)
+```
+
+
+## choosing axis ticks thoughtfully
+We want to keep the step size because it reveals the "bunching" pattern, but the number of ticks is completely unnecessary and the axis labels are not informative.
+
+```{python}
+alt.Chart(diamonds_small).mark_bar().encode(
+    alt.X(
+      'carat',
+      bin = alt.BinParams(step=0.01),
+      axis = alt.Axis(values=[i * 0.5 for i in range(5)])
+    ),
+    alt.Y('count()')
+)
+```
+
+`[i * 0.5 for i in range(5)]`: [0*0.5, 2*0.5, 3*0.5, ...]
+    
+
+## Configuring Scales and Axes: summary 
+
+How to make your axes and grids as informative as possible
+
+* Choose an `alt.Scale()` that reveals differences between the data (in most cases...)
+* Axis titles should clarify meaning
+* Deliberately choose axis length via `domain` argument
+* Reduce grid clutter  via `alt.Axis()`
+* Choose grid labels thoughtfully
+
+# Configuring Color Legends
+
+## Configuring Color Legends: roadmap and warning
+* Visualization as a tool for discovery
+* `alt.Color()` in legends
+    * binary variable
+    * text data (every dot is different)
+    * groups
+* use color to encode quantitative values
+
+Remarks: 
+
+* This section of the textbook asks you to practice your "skepticism" muscle. What we mean by that is that it is mostly about showing what does *not* work. we will follow the textbook, but for many of the plots,  your first question should not be "where would I want to use this tool?" but rather "why is this not a good idea?"
+* The official title of this section of lecture is about color legends, but the deeper lessons are about how to clean data to uncover and communciate structure
+
+## Visualization as a tool for discovery
+
+* Above we saw that neomycin is more effective for some bacteria, while penicillin is more effective for others. 
+* Is there any systematic answer to what types of bacteria each drug is more effective for? This is the kind of question for which data visualization shines.
+
+<!-- deleted for this year, might revive in a future year
+* If we just stared at a table in Excel or Pandas, it might be hard to see patterns (and at the very least it would take awhile). Until now, almost everything we have seen for data visualization has been about **communication**. Now, we are going to see how data visualization can be a tool for **discovery**.-->
+
+## Gram staining
+
+Let's start by looking at one of the other columns in the data frame (which we have ignored until now). 
+
+A tiny bit of science: the reaction of the bacteria to a procedure called [Gram staining](https://en.wikipedia.org/wiki/Gram_stain) is described by the nominal field `Gram_Staining`. Bacteria that turn dark blue or violet are Gram-positive. Otherwise, they are Gram-negative.
+
+![Gram staining example](pictures/Gram_stain_01.jpg)
+
+```{python}
+antibiotics[['Gram_Staining']].tail()
+```
+
+
+## alt.Color('Gram_Staining:N')
+Let's encode `Gram_Staining` on the `color` channel as a nominal data type:
+```{python}
+alt.Chart(antibiotics).mark_circle(size=80).encode(
+    alt.X('Neomycin:Q',
+          sort='descending',
+          scale=alt.Scale(type='log', domain=[0.001, 1000]),
+          axis=alt.Axis(tickCount=5),
+          title='← Less effective --- Neomycin MIC (μg/ml) --- more effective →'),
+    alt.Y('Penicillin:Q',
+          sort='descending',
+          scale=alt.Scale(type='log', domain=[0.001, 1000]),
+          axis=alt.Axis(tickCount=5),
+          title='← Less effective --- Penicillin MIC (μg/ml) --- more effective →'),
+    alt.Color('Gram_Staining:N')
+).properties(width=250, height=250)
+```
+
+We can see that Gram-positive bacteria seem most susceptible to penicillin, whereas neomycin is more effective for Gram-negative bacteria!
+
+## Color by Species 
+
+```{python}
+alt.Chart(antibiotics).mark_circle(size=80).encode(
+    alt.X('Neomycin:Q',
+          sort='descending',
+          scale=alt.Scale(type='log', domain=[0.001, 1000]),
+          axis=alt.Axis(tickCount=5),
+          title='← Less effective --- Neomycin MIC (μg/ml) --- more effective →'),
+    alt.Y('Penicillin:Q',
+          sort='descending',
+          scale=alt.Scale(type='log', domain=[0.001, 1000]),
+          axis=alt.Axis(tickCount=5),
+          title='← Less effective --- Penicillin MIC (μg/ml) --- more effective →'),
+    alt.Color('Bacteria:O',
+          scale=alt.Scale(scheme='viridis'))
+).properties(width=250, height=250)
+```
+
+
+## Discussion question
+
+Example in prior slide is jury-rigged to work nicely. They work because
+
+* legend is ordered alphabetically
+* bacteria family is at the beginning of the name of each strain.
+
+Suppose instead that the family was instead at the *end* of the name
+
+| **Bacteria group, Genus** |
+| --- | 
+| Viridans, streptococcus |
+| Hemolycticus, Streptococcus |
+
+
+In-class discussion: let's brainstorm in real-time. How would you get the color scheme to align with family? There's more than one good way to do this.
+
+## Text Labels by Species 
+
+A more clear way to handle this is to use `mark_text()` to explicitly label each dot. However, that comes at the cost of adding a lot of chart clutter.
+
+```{python}
+base = alt.Chart(antibiotics).mark_circle(size=80).encode(
+    alt.X('Penicillin:Q',
+          sort='descending',
+          scale=alt.Scale(type='log', domain=[0.001, 1000]),
+          axis=alt.Axis(tickCount=5),
+          title='← Less effective --- Penicillin MIC (μg/ml) --- more effective →'),
+    alt.Y('Streptomycin:Q',
+          scale=alt.Scale(type='log', domain=[0.001, 1000]),
+          axis=alt.Axis(tickCount=5),
+          title='Streptomycin MIC (μg/ml, reverse log scale)'),
+    alt.Color('Bacteria:N', legend=None)
+).properties(width=250, height=250)
+
+# Add text labels next to each dot
+text = base.mark_text(
+    align='left',
+    baseline='middle',
+    dx=7,  # Adjust the position of the text
+    dy=-5
+).encode(
+    text='Bacteria:O'
+)
+
+# Combine the base chart with the text labels
+chart = base + text
+
+chart
+```
+
+* `dx = 7`: offset text 7 pixels to the right
+* `dx = -5`: offse text 5 pixels up
+
+
+## Color by Genus I: use groups
+
+Need to use `transform_calculate()` to extract `Genus`
+
+```{python}
+alt.Chart(antibiotics).mark_circle(size=80).transform_calculate(
+    Genus='split(datum.Bacteria, " ")[0]'
+).encode(
+    alt.X('Neomycin:Q',
+          sort='descending',
+          scale=alt.Scale(type='log', domain=[0.001, 1000]),
+          axis=alt.Axis(tickCount=5),
+          title='← Less effective --- Neomycin MIC (μg/ml) --- more effective →'),
+    alt.Y('Penicillin:Q',
+          sort='descending',
+          scale=alt.Scale(type='log', domain=[0.001, 1000]),
+          axis=alt.Axis(tickCount=5),
+          title='← Less effective --- Penicillin MIC (μg/ml) --- more effective →'),
+    alt.Color('Genus:N',
+          scale=alt.Scale(scheme='tableau20'))
+).properties(width=250, height=250)
+```
+
+Explanation of code: 
+* `Genus='split(datum.Bacteria, " ")[0]'`: splits `Bacteria` by " " (space), and then selects the first value in that index
+* Example: `split("Aerobacter aerogenes")` --> `[Aerobacter, aerogenes]`
+* `Split = split("Aerobacter aerogenes"[0]` --> `Split = Aerobacter`
+
+## Color by Genus II -- reducing the number of groups 
+
+Even after extracting `Genus`, there are a lot of categories and since it's not ordinal, the number of colors are overwhelming. We can focus on just the top 3 `Genus` and recode infrequent `Genus` values to "Other".
+
+```{python}
+alt.Chart(antibiotics).mark_circle(size=80).transform_calculate(
+  Split='split(datum.Bacteria, " ")[0]'
+).transform_calculate(
+  Genus='indexof(["Salmonella", "Staphylococcus", "Streptococcus"], datum.Split) >= 0 ? datum.Split : "Other"'
+).encode(
+    alt.X('Neomycin:Q',
+          sort='descending',
+          scale=alt.Scale(type='log', domain=[0.001, 1000]),
+          axis=alt.Axis(tickCount=5),
+          title='← Less effective --- Neomycin MIC (μg/ml) --- more effective →'),
+    alt.Y('Penicillin:Q',
+          sort='descending',
+          scale=alt.Scale(type='log', domain=[0.001, 1000]),
+          axis=alt.Axis(tickCount=5),
+          title='← Less effective --- Penicillin MIC (μg/ml) --- more effective →'),
+    alt.Color('Genus:N',
+          scale=alt.Scale(
+            domain=['Salmonella', 'Staphylococcus', 'Streptococcus', 'Other'],
+            range=['rgb(76,120,168)', 'rgb(84,162,75)', 'rgb(228,87,86)', 'rgb(121,112,110)']
+          ))
+).properties(width=250, height=250)
+```
+
+Explanation of code: 
+* `Genus='indexof(["Salmonella", "Staphylococcus", "Streptococcus"], datum.Split) >= 0 ? datum.Split : "Other"'`
+    * Looks for index of `Split` in `["Salmonella", "Staphylococcus", "Streptococcus"]`
+* "Ternary operator": `Condition ? Value_if_true : Value_if_false`
+    * If `[index >= 0]` -> assign `Genus = Split`
+    * If `[index < 0]` -> assign `Genus = "Other"`
+* Examples:
+    * `Split = "Salmonella"` -> `Genus = "Salmonella"`
+    * `Split = "Aerbacter"` -> `Genus = "Other"`
+
+
+
+## Configuring Color Legends: summary
+* Overarching idea: visualization as a tool for discovery
+* Avoid too many groups in a legend
+* Strive to
+    * Choose colors with external meaning (e.g. gram staining)
+    * Construct categorical variables (e.g. `Genus`)
+    * If you must have many categories, put annotation directly next to dots
+
+
+# Intro to "Multi-view composition" Ch 5
+
+
+## Introduction
+
+-   When visualizing a number of different data fields, we might be tempted to use as many visual encoding channels as we can: `x`, `y`, `color`, `size`, `shape`, and so on.
+-   However, as the number of encoding channels increases, a chart can rapidly become cluttered and difficult to read.
+- An alternative to "over-loading" a single chart is to instead *compose multiple charts* in a way that facilitates rapid comparisons.
+
+Chapter 5 examines a variety of operations for *multi-view composition*
+
+1.  *layer*: place compatible charts directly on top of each other,
+2.  *facet*: partition data into multiple charts, organized in rows or columns,\`
+3.  *concatenate*: position arbitrary charts within a shared layout, and
+4.  *repeat*: take a base chart specification and apply it to multiple data fields.
+
+In the interest of time, in class, we will cover only **facet** and **concatenate** (you already have seen a version of layer before and repeat is covered in the textbook)
+
+A common question that comes up is "How do I know when I need to create multiple views?"
+
+There is no *official* answer to this question, you have to look at the plot you have created so far and then make a judgment call.
+
+## Facet and concatenate roadmap
+
+* Review encoding channel `column`
+* New tools:
+    * `facet` 
+    * `|`
+
+
+## Dataset
+
+```{python}
+import pandas as pd
+import altair as alt
+```
+
+```{python}
+#| eval: false
+weather_url = 'https://cdn.jsdelivr.net/npm/vega-datasets@1/data/weather.csv'
+weather = pd.read_csv(weather_url)
+```
+
+```{python}
+#| echo: false
+weather = pd.read_csv('data/weather.csv')
+```
+
+Recall the dataset for weather:
+
+```{python}
+weather.head(10)
+```
+
+## Histogram of precipitation
+```{python}
+alt.Chart(weather).mark_bar().transform_filter(
+  'datum.location == "Seattle"'
+).encode(
+  alt.X('temp_max:Q', bin=True, title='Temperature (°C)'),
+  alt.Y('count():Q')
+)
+```
+
+## Facet by sky and precipitation
+We *facet* by encoding a categorical as `alt.Column()`
+```{python}
+colors = alt.Scale(
+  domain=['drizzle', 'fog', 'rain', 'snow', 'sun'],
+  range=['#aec7e8', '#c7c7c7', '#1f77b4', '#9467bd', '#e7ba52']
+)
+
+alt.Chart(weather).mark_bar().transform_filter(
+  'datum.location == "Seattle"'
+).encode(
+  alt.X('temp_max:Q', bin=True, title='Temperature (°C)'),
+  alt.Y('count():Q'),
+  alt.Color('weather:N'),
+  alt.Column('weather:N')
+).properties(
+  width=150,
+  height=150
+)
+```
+
+Remark on naming variables: the textbook engages in a pretty big sin here
+* `weather` is used to denote the data frame
+* `weather` is ALSO used for `domain=['drizzle', 'fog', 'rain', 'snow', 'sun']`
+
+This violates the basic principle of not using the same word for two different things.
+    * We are not going to fix this problem because it will make this lecture note be out of sync with the textbook
+    * But it would be easily addressed by adding `transform_calculate(sky_precip='datum.weather')`.
+
+Discussion question: are there any other obvious problems with this plot?
+
+
+## syntax: recreate the same chart as before, but using `facet()`
+```{python}
+#| eval: false
+alt.Chart(weather).mark_bar().transform_filter(
+  'datum.location == "Seattle"'
+).encode(
+  alt.X('temp_max:Q', bin=True, title='Temperature (°C)'),
+  alt.Y('count():Q'),
+  alt.Color('weather:N'),
+  alt.Column('weather:N')
+).properties(
+  width=150,
+  height=150
+)
+```
+
+```{python}
+alt.Chart().mark_bar().transform_filter(
+  'datum.location == "Seattle"'
+).encode(
+  alt.X('temp_max:Q', bin=True, title='Temperature (°C)'),
+  alt.Y('count():Q'),
+  alt.Color('weather:N', scale=colors)
+).properties(
+  width=150,
+  height=150
+).facet(
+  data=weather,
+  column='weather:N'
+)
+```
+
+## `facet()`: why bother?
+
+* In the example above, `facet` substitutes for `alt.Column()`.  
+* However, it is more powerful because it can iterate over every aspect of a plot. 
+
+Going back to our prior temperature plot for New York and Seattle, it can iterate over `mark_area()` and `mark_line()`
+
+```{python}
+# note the lack of data in this chart
+tempMinMax = alt.Chart().mark_area(opacity=0.3).encode(
+  alt.X('month(date):T', title=None, axis=alt.Axis(format='%b')),
+  alt.Y('average(temp_max):Q', title='Avg. Temperature (°C)'),
+  alt.Y2('average(temp_min):Q')
+)
+
+# and the lack of data in this chart as well!
+tempMid = alt.Chart().mark_line().transform_calculate(
+  temp_mid='(+datum.temp_min + +datum.temp_max) / 2'
+).encode(
+  alt.X('month(date):T'),
+  alt.Y('average(temp_mid):Q')
+)
+
+
+alt.layer(tempMinMax, tempMid).facet(
+  data=weather,
+  column='location:N'
+)
+```
+
+
+## Concatenate motivation
+
+* Sometimes you just want completely different plots to be side-by-side. Facet cannot handle this (because it assumes you are showing different groupings of the same data), but **concatenate** can
+
+## Concatenate
+```{python}
+base = alt.Chart(weather).mark_line().encode(
+  alt.X('month(date):T', title=None),
+  color='location:N'
+).properties(
+  width=240,
+  height=180
+)
+
+temp = base.encode(alt.Y('average(temp_max):Q'))
+precip = base.encode(alt.Y('average(precipitation):Q'))
+wind = base.encode(alt.Y('average(wind):Q'))
+
+temp | precip | wind
+```
+
+
+## Facet, concatenate, and repeat summary
+
+* Use `facet` to create a multi-panel plot which examines the same data but using different subgroups and different marks
+* `|` allows you to connect completely disparate plots
