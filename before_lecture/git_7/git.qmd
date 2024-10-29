@@ -8,6 +8,14 @@ format:
     fig-width: 6
     fig-height: 4
     include-in-header: header_pagenrs.tex
+include-before-body:
+  text: |
+    \RecustomVerbatimEnvironment{verbatim}{Verbatim}{
+      showspaces = false,
+      showtabs = false,
+      breaksymbolleft={},
+      breaklines
+    }
     
 ---
 
@@ -20,8 +28,10 @@ format:
 * How (not) to learn git 
 * Git vs. Github vs. Github Desktop
 
+<!--
 ## What is version control?
 ![](img/comic.png){fig-align="center" height=100%}
+-->
 
 ## What is version control?
 * Version control: a system that records changes to a file or set of files over time so that you can recall specific versions later
@@ -239,7 +249,7 @@ Example `.gitignore` :
 * Switching Branches
 * Other Useful Branching Commands
 
-## Branching
+<!-- ## Branching
 
 ![](img/branching_1.png){fig-align="center" width=75%}
 
@@ -248,13 +258,20 @@ Example `.gitignore` :
 Remarks: 
 
 * These commit names (`C0`, `C1`...) are terrible. Insufficiently descriptive. Using them only because we are following an example from the textbook.
-* Git today calls the primary branch `main`. However, git used to call the primary branch `master`. The textbook uses this legacy terminology. 
+* Git today calls the primary branch `main`. However, git used to call the primary branch `master`. The textbook uses this legacy terminology.  -->
 
 ## Branching
 
+* Let's say our git repo has the file `mycode.py` and the following commit history
 ![](img/branching_1.png){fig-align="center" width=75%}
 
-* What would you do if you wanted to do some exploratory work in a safe environment without affecting the work other team members might be doing?
+
+* Some terminology: `HEAD` is your current position in the Git repo's history 
+* Right now, the `HEAD` is in the `master` branch at commit `C2`
+
+. . . 
+
+* Say we want to do some exploratory work in a safe environment without affecting the work other team members are doing --> *create a new branch*
 
 
 
@@ -265,7 +282,7 @@ Remarks:
 ```{}
 $ git branch iss53
 ```
-* Creates a new branch called `iss53`
+* Let's call our new branch `iss53` (stands for issue 53)
 
 ## Switching Branches I
 ![](img/branching_2.png){fig-align="center" width=75%}
@@ -274,16 +291,18 @@ $ git branch iss53
 ```{}
 $ git switch iss53
 ```
-* Switches to your new branch `iss53`
+* Switches our `HEAD` (i.e., where we are) to our new branch `iss53`
 
 ## Switching Branches II
 ![](img/branching_3.png){fig-align="center" width=75%}
 
 
 ```{}
-$ git commit -m "New work on iss53"
+[make some changes to file.py]
+$ git commit -m "commit message for C3"
 ```
-* With `iss53` checked out, your commits now move `iss53` forward while leaving `master` untouched
+* With `iss53` checked out, our commits now move `iss53` along with `HEAD` _forward_
+* While leaving `master` untouched
 
 ## Other Useful Branching Commands
 ```{}
@@ -294,7 +313,7 @@ $ git branch
 ```{}
 $ git branch -d <branch_to_delete> 
 ```
-* Deletes *branch_to_delete*
+* Deletes *branch_to_delete* -- you only want to do this after you've merged in your work to another branch (up next)
 
 ## Summary
 * Working in branches creates an independent, safe development environment
@@ -318,7 +337,9 @@ $ git branch -d <branch_to_delete>
 $ git switch master 
 $ git branch hotfix
 $ git switch hotfix
-$ git commit -a -m "Work in hotfix branch"
+[make some changes to myfile.py]
+$ git add myfile.py
+$ git commit -m "commit message for C4"
 
 ```
 
@@ -330,18 +351,26 @@ $ git commit -a -m "Work in hotfix branch"
 ```{}
 $ git switch master 
 $ git merge hotfix
+$ git branch -d hotfix
 ```
-* Brings changes from `hotfix` into `master`
-* This is a called a "fast forward merge"
-
+* Brings changes from `hotfix` into `master`:  _"fast forward merge"_
+* You can now safely delete the branch `hotfix`
 
 ## Three way merge I
+![](img/merging_3_v2.png){fig-align="center" width=75%}
+
+* Now say that as you were working on merging `hotfix` into `master`, your partner was working on `issue53`
+* And they also made some changes to `myfile.py`, which they committed as "C5"
+
+
+
+## Three way merge II
 ![](img/merging_3.png){fig-align="center" width=75%}
 
 * Merging `iss53` into `master` now has to account for a divergent work history
 
 
-## Three way merge II
+## Three way merge III
 ![](img/merging_4.png){fig-align="center" width=75%}
 
 ```{}
@@ -349,10 +378,12 @@ $ git switch master
 $ git merge iss53
 ```
 
-* This is called a "three way merge" because it involves combining C2, C4, and C5 into a single unified version of the code
+* This is called a _"three way merge"_ because it involves combining C2, C4, and C5 into a single unified version of the code
+* Because you might have to change C4 or C5 in order to get them to merge, this creates a new commit called C6
 
 ## Three way merge with a conflict I
-We will use the repo **[merge_example](https://github.com/uchicago-harris-dap/merge_example)** which has the following commit history:
+* Let's now switch examples and re-build our toy
+* We will use the repo **[merge_example](https://github.com/uchicago-harris-dap/merge_example)** which has the following commit history:
 
 \footnotesize
 
@@ -361,9 +392,9 @@ We will use the repo **[merge_example](https://github.com/uchicago-harris-dap/me
 |------|----------|------------------------------------------|-----------|-----------|
 | C0   | `main`   | Create `add.py`, which adds x to 3       | none      | no        |
 | C1   | `hotfix` | Change `add.py` to add x and y           | C0        | no        |
-| C2   | `iss53`  | Change `add.py` to add a list  | C1        | no        |
-| C3   | `main`   | Change `add.py` to add x to 4            | C2        | no        |
-| C4   | `main`   | Merge `hotfix` into `main`               | C1 \& C3 | yes!      |
+| C2   | `iss53`  | Change `add.py` to add a list  | C0        | no        |
+| C3   | `main`   | Change `add.py` to add x to 4            | C0         | no        |
+<!-- | C4   | `main`   | Merge `hotfix` into `main`               | C1 \& C3 | yes!      | -->
 
 \normalsize
 
@@ -449,36 +480,65 @@ $ git switch hotfix
 * Running *git switch* command switches to different branches, and each branch contains a different version of *add.py*
 
 
-
 ## Three way merge with a conflict V
+* Now let's try to merge `main` and `hotfix` together
+* Doing so will create a new commit, C4
+
+\footnotesize
+
+\newcommand{\theHtable}{\thetable}
+| name | branch   | content                                  | parent    | conflict? |
+|------|----------|------------------------------------------|-----------|-----------|
+| C0   | `main`   | Create `add.py`, which adds x to 3       | none      | no        |
+| C1   | `hotfix` | Change `add.py` to add x and y           | C0        | no        |
+| C2   | `iss53`  | Change `add.py` to add a list  | C0        | no        |
+| C3   | `main`   | Change `add.py` to add x to 4            | C0         | no        |
+| C4   | `main`   | Merge `hotfix` into `main`               | C1 \& C3 | yes!      |
+
+\normalsize
+
+
+## Three way merge with a conflict VI
 ```{}
 $ git switch main
 $ git merge hotfix
 ```
 
-![](img/merge_conflicts_1.png){fig-align="center" width=90%}
+. . .
+
+* Because we have different versions of `add.py` in each branch, merging `hotfix` into `main` causes conflicts!
+* You will get this scary-seeming message -- _don't panic!_
+```{}
+Auto-merging add.py
+CONFLICT (content): Merge conflict in add.py
+Automatic merge failed; fix conflicts and then commit the result.
+```
+
+## Three way merge with a conflict VII
+* After you type `git merge hotfix`, git will edit your `add.py` file and use the following format wherever it finds a conflict:
+
+![](img/merge_conflicts_1.png){fig-align="center" width=100%}
 
 
-* Merging *hotfix* into `main` causes conflicts.
+
 
 . . .
 
-* Resolve within Visual Studio Code. 
-    * Remark: Although merge conflicts can be resolved via command line, it is more time consuming and provides no educational benefit to do so.
-* Discussion question: Do we want "Current Change", "Incoming Change" or "Both"? Why?
+* Resolve within Visual Studio Code by clicking "Accept Current Change" or "Accept Incoming change" or "Accept Both changes"
+
+<!-- * Discussion question: Do we want "Current Change", "Incoming Change" or "Both"? Why? -->
 
 
-::: {.notes .content-visible when-profile="speaker"}
+<!-- ::: {.notes .content-visible when-profile="speaker"}
 **NOTES:**
 Incoming change because it is more general
-:::
+::: -->
 
 
 
 ## Three way merge with a conflict VI
-
-How `add.py` looks after conflict is resolved
-* Resulting file in `main` looks exactly like version in hotfix
+* In this case, we'll keep what's in `hotfix`
+* How `add.py` looks after we've clicked "Accept incoming change": exactly like version in `hotfix`
 
 ```{python}
 #| eval: false
@@ -493,8 +553,31 @@ def add(x, y):
     return (x + y)
 ```
 
+* (Of course, you could have resolved it by "Accepting current change", which would look exactly like `main`!)
+
 
 ## Three way merge with a conflict VII
+* After resolving, have to add and then commit the merge
+```{}
+git add add.py
+git commit -m "C3: resolved conflict between main and hotfix and merged"
+```
+
+. . .
+
+* _Note: if you forget to type a commit message when merging, Git will open up a text editor in Terminal and force you to write a message._
+
+```{}
+# Please enter a commit message to explain why this merge is necessary,
+# especially if it merges an updated upstream into a topic branch.
+#
+# Lines starting with '#' will be ignored, and an empty message aborts
+# the commit.
+```
+
+* _To avoid this, always include a commit message_
+
+## Three way merge with a conflict VIII
 
 
 ![](img/merge_example3.png){fig-align="center" height=80%}
@@ -509,35 +592,37 @@ preserved in case we want to revive it
 --> 
 
 
-:::
- 
 
 
 ## do-pair-share: merge conflicts
 
-![](img/merge_example4.png){fig-align="center" height=50%}
+<!-- ![](img/merge_example4.png){fig-align="center" height=50%} -->
 
-Goal: the file *add.py* should look identical on `main` and `iss53`
+Goal: resolve the conflict between `main` and `iss53`
 
-1. `git fork https://github.com/uchicago-harris-dap/merge_example` 
-2. Clone your fork to local
-3. Merge `iss53` into `main`, naming your commit `C5`
-4. Using VSCode, resolve the conflict in favor of the `iss53` version
-
-
+1. *(Already done) On github.com, fork `https://github.com/uchicago-harris-dap/merge_example`*
+2. *(Already done) Clone your fork to local (can use Github Desktop for now)*
+3. Navigate into that folder with Terminal
+    * Either use `cd` in command line
+    * Or Github Desktop -> Repository -> Open in Terminal
+4. Merge `iss53` into `main`
+5. Using VSCode, open `add.py` and resolve the conflict in favor of the `iss53` version
+6. `git add add.py`
+7.  `git commit -m "C4: resolved conflict between main and iss53 and merged"`
 
 ## Resolving file-level conflicts I
 * For some file types, line-by-line adjustments will not be possible
-  * E.g. PDFs
+  * E.g. PDFs, HTML
 
 ## Resolving file-level conflicts II
 
 **[Repo](https://github.com/uchicago-harris-dap/merge_example_pdf)**
 
-* Branch *iss1* has a version of the file *Example.pdf* that conflicts with the version on *main*
+* Branch *iss1* has a version of the file *Example.pdf* 
+* Branch *main* has another version of *Example.pdf*
 * How to resolve the conflict when merging *main* into *iss1*?
-* Pull request **[here](https://github.com/uchicago-harris-dap/merge_example_pdf/pull/1)**
-
+* Example **[here (link)](https://github.com/uchicago-harris-dap/merge_example_pdf/pull/1)**
+<!-- 
 ## Resolving file-level conflicts III
 
 ```{}
@@ -545,28 +630,35 @@ $ git switch iss1
 $ git merge main
 ```
 
-* After merge step, git returns a conflict message. 
+* After merge step, git returns a conflict message.  -->
 
 ## Resolving file-level conflicts III 
+
+* Solution: `git checkout` command with 
+  * `--theirs`: keep file from incoming branch (main)
+  * `--ours:` keep file from current branch (iss1)
+
 
 ```{}
 $ git switch iss1
 $ git merge main
 $ git checkout --theirs Example.pdf
+```
+
+* Since I switched into `iss1`, `--theirs` refers to `main`
+
+. . .
+
+```{}
 $ git add Example.pdf
 $ git commit -m "C5: Merging main into iss1"
 ```
 
-* Solution: *checkout* command with 
-  * --theirs: keep file from incoming branch (main)
-  * --ours: keep file from current branch (iss1)
-* Add changes and commit to finalize merge
-
 ## Summary
 
 * Merging brings changes from one branch into another
-    * Easier case: fast forward
-    * Harder case: three way merge
+    * Easier case: _fast forward_ when there is no diverging
+    * Harder case: _three way merge_ when there is diverging
 * When branches have divergent commit histories, you may have to manually resolve conflicts
 * Some conflicts must be resolved by keeping files from one branch or another
 
@@ -574,6 +666,9 @@ $ git commit -m "C5: Merging main into iss1"
 # Reconciling Your Version with a Remote (Chapter 2.5 and 3.5)
 
 ## Roadmap
+* push 
+* fetch/pull 
+
 * list all branches
 * fetch
 * pull
@@ -581,14 +676,24 @@ $ git commit -m "C5: Merging main into iss1"
 * push
 
 
-## see all branches
+## Remote: Github
+* Up to this point, everything we've been doing is local
+* But for collaboration, you will be working off a shared directory
+* And that shared directory is usually hosted on Github
 
-* list all branches, including branches in the remote repository which are not on your computer
+##  "Distributed" version control 
+* Each computer fully mirrors the remote repository, including its full history
+
+![](img/distributed_vc.png){fig-align="center" height=70%}
+
+
+## push
 
 ```{}
-$ git branch -a 
+$ git push  <branch_name>
 ```
 
+* push (committed) changes from local to remote repository 
 
 ## fetch
 
@@ -596,9 +701,12 @@ $ git branch -a
 $ git fetch 
 ```
 
-* Get changes from remote repository to your computer.
+* Fetches changes from remote repository to your computer -- but doesn't merge then in yet
 * This command does not modify any of your existing work. 
-* If you did some work in the same branch, you will need to do a *git merge origin* to reconcile your work with the work in the remote.
+* If you did some work in the same branch, you will need to resolve conflicts with the remote
+    * *git merge origin* 
+
+
 
 
 ## pull
@@ -611,11 +719,28 @@ $ git pull  <branch_name>
 * Automatically fetches branch from the remote repository, then merges that branch into your current branch
 * If there are reconcilable changes in both places, git will create a reconciling merge commit and ask you to confirm the content of the git message.
 * If there are irreconcilable changes, then you are in the world of the last section of lecture where you need to do some reconciliation.
+* Remark: "sync changes" (appears in GH desktop and VSCode) really means push and pull
+
+## see _all_ branches
+
+* list all branches, including branches in the remote repository which are not on your computer
+
+```{}
+$ git branch -a 
+```
+
+
+## what happens if you push and there are also changes in the remote?
+
+
+"Updates were rejected because the remote contains work that you do not have locally. This is usually caused by another repository pushing to the same ref. You may want to first merge the remote changes (e.g., hint: 'git pull') before pushing again."
+
+
 
 
 ## Pull Requests
-* A pull request is a way to merge changes from a branch into an upstream repository.
-* Doesn't `git merge` already do this? Yes, but it this way allows for collaborative peer review
+* A pull request is a way to propose changes from your branch to be merged into the main project/branch
+* Doesn't `git merge` already do this? Yes, but pull requests allow teammates to review your code before it gets merged.
 * Example: open pull request for merge_example repo ([here](https://github.com/uchicago-harris-dap/merge_example/pull/1))
 
 
@@ -637,24 +762,18 @@ When should I use each?
 * Use pull requests when you want someone else to review the change
 * Otherwise, just use `git merge`
 
-## push
-
-```{}
-$ git push  <branch_name>
-```
-
-* push (committed) changes from local to remote repository 
-* what happens if you push and there are also changes in the remote? "Updates were rejected because the remote contains work that you do not have locally. This is usually caused by another repository pushing to the same ref. You may want to first merge the remote changes (e.g., hint: 'git pull') before pushing again."
-
-
 ## Summary
 
+* *push* sends changes from local to remote
 * *fetch* brings changes from remote to local
 * *pull* brings changes from remote to local and tries to reconcile via merge commit
-* pull requests provide a "trial run" of merges that is visible to collaborators
-* *push* sends changes from local to remote
-* Remark: "sync changes" (appears in GH desktop and VSCode) really means push and pull
+* _pull requests_ provide a "trial run" of merges that is visible to collaborators
 
+
+## Final Remarks
+* Git is admittedly confusing! 
+* Now that you know how it works, you have to start using it to get comfortable using the commands
+* MS: I have a printed version of a Git cheatsheet (`atlassian_cheatsheet.pdf`) taped on the wall in my office
 
 
 

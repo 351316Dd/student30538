@@ -1,0 +1,334 @@
+---
+title: "Spatial I"
+author: "Peter Ganong and Maggie Shi"
+date: today
+date-format: long
+toc: false
+execute: 
+    echo: true
+format:
+    html:
+        toc: false 
+---
+
+<!--
+ beamer:
+    toc: true
+    fig-width: 6
+    fig-height: 4
+    include-in-header: header_pagenrs.tex
+include-before-body:
+  text: |
+    \RecustomVerbatimEnvironment{verbatim}{Verbatim}{
+      showspaces = false,
+      showtabs = false,
+      breaksymbolleft={},
+      breaklines
+    }
+    -->
+
+# Introduction (5.2)
+
+## Intro: roadmap
+
+-   motivation
+-   textbook
+-   `requirements.txt`
+-   types of geo data
+-   attribute data
+-   storage for geo data
+
+## Motivation
+
+-   For many datasets, the fundamental unit of observation is geographic
+    -   a place
+    -   a road
+    -   a building
+    -   a county
+-   By the end of this section (two classes), you will be able to 
+    - Represent geographic vector objects in Python using the `shapely` library
+    - Understand the basic data structures and methods of geopandas GeoDataFrames
+    - Execute common geometric operations with points, lines and polygons
+    - Spatial join operations
+
+## Textbook
+
+[Introduction to Python for Geographic Data Analysis](https://pythongis.org) by Henrikki Tenkanen, Vuokko Heikinheimo & David Whipp
+
+Book has three parts:
+
+1.  Intro to Python (you know this already)
+2.  Intro to Geographical Information Systems (GIS) with Python
+3.  Case Studies (this part is actually not written yet)
+
+We are going to teach material from Chapters 5 and 6 in Section 2.
+
+## `requirements.txt`
+
+(We will elaborate more on what this file is in minilesson on Wednesday)
+
+`shapely` -- Manipulation and analysis of geometric objects in the Cartesian plane.
+
+`geopandas` -- Geometric objects nested within a standard pandas data frame
+
+```{python}
+import shapely
+from shapely import Polygon, Point
+```
+
+## Vector vs raster data
+
+![](pictures/vector_vs_raster.jpg){height="80%"}
+
+**Vector** data records points, lines and shapes. **Raster** data records pixels. 
+
+Discussion question -- brainstorm examples of each type of data.
+
+
+## Examples of vector data
+
+![](pictures/vector_data_model.jpg){height="100%"}
+
+The numbers are called **well-known text**: a version of the data which is easily interpretable to a human. We will discuss how to read these shortly!
+
+
+
+## Attribute data
+
+In virtually every example, we will associate **attribute** data with vectors -- these are what might appear in a table in a standard dataframe, but now the data is associated with a point, line, or shape.
+
+Examples of data that would associate with a *point*:
+
+* particulate matter (pollution)
+* temperature
+* altitude
+
+Discussion question: what type of data would you associate with...
+
+1.  ...a building?
+2.  ...a geographic area?
+
+## Intro: summary
+
+- vector data
+- raster data
+- attribute data
+- The spatial lectures here will focus on vector and attribute data because of time limitations.
+
+# Representing geographic data in vector format (6.1)
+
+## geo data in vectors: roadmap
+
+-   `Point`
+-   `LineString`
+-   `Polygon`
+
+Within each data type, we will cover creation, Well Known Text (WKT), and coordinates. 
+
+*Note: when working with spatial data, we typically will not start by creating the shapes themselves. But it is important to understand them because they form the basis of spatial data and all spatial transformation is just manipulating the underlying vectors.*
+
+
+## `Point`: creating geometries
+
+```{python}
+from shapely import Point
+
+point = Point(2.2, 4.2)
+point
+```
+
+## `Point`: Well Known Text (WKT) representation
+
+```{python}
+print(point) #extracts WKT
+point.wkt    #gets WKT directly
+
+point3D = Point(9.26, -2.456, 0.57)
+print(point3D)
+```
+
+* `WKT` gives you a plaintext representation of where the point is. 
+* It contrasts with Well Known Binary (`WKB`) which stores geo data in the way which is most efficient for the computer. 
+    * Wikipedia has some nice [examples](https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry) of how the same point is stored by WKT and WKB.
+
+## `Point`: Coordinate representation
+
+```{python}
+type(point.coords)
+```
+
+```{python}
+list(point.coords)
+```
+
+When the object is a `Point`, the `WKT` looks very similar to the coordinates. As the objects get more complicated, the formatting of `WKT` starts to deviate from coordinates. 
+
+## `Point`: extraction methods
+
+```{python}
+print(point.x)
+```
+
+```{python}
+print(point.xy)
+```
+
+
+
+
+## `LineString`: creating geometries
+
+```{python}
+from shapely import Point, LineString
+
+point1 = Point(2.2, 4.2)
+point2 = Point(7.2, -25.1)
+point3 = Point(9.26, -2.456)
+
+line = LineString([point1, point2, point3])
+line_from_tuples = LineString([(2.2, 4.2), (7.2, -25.1), (9.26, -2.456)])
+line
+```
+
+## `LineString`: creation syntax
+
+These two input methods produce the same output. No "right" way. Use whichever way is more convenient in your application.
+
+```{python}
+line = LineString([point1, point2, point3])
+
+line_from_tuples = LineString([(2.2, 4.2), (7.2, -25.1), (9.26, -2.456)])
+```
+
+## `LineString` discussion questions
+
+1.  What output should we expect if we run `print(line)`? Write down your guess on your MUD card before you run it at the computer.
+2.  How can you access the Well Known Text representation?
+
+
+## `LineString` coordinate representation
+
+```{python}
+list(line.coords)
+```
+
+## `LineString` attributes
+```{python}
+xcoords = list(line.xy[0])
+ycoords = list(line.xy[1])
+
+print(xcoords)
+print(ycoords)
+```
+
+
+## `LineString` attributes, continued
+Length is the sum of distances between consecutive points. 
+
+```{python}
+length = line.length
+print(f"Length of our line: {length:.2f} units")
+```
+
+
+
+
+## `Polygon`: creating geometries
+
+```{python}
+from shapely import Polygon
+poly = Polygon([point1, point2, point3])
+poly
+```
+
+
+## `Polygon`: WKT
+
+```{python}
+poly.wkt
+```
+
+Note the double parentheses. In contrast:
+
+```{python}
+line.wkt
+```
+
+## `Polygon`: attributes
+
+```{python}
+print("Polygon centroid: ", poly.centroid)
+poly.centroid
+```
+
+```{python}
+print("Polygon Area: ", poly.area)
+poly.area 
+```
+
+```{python}
+print("Polygon Bounding Box: ", poly.bounds)
+poly.bounds
+```
+
+```{python}
+print("Polygon Exterior: ", poly.exterior)
+poly.exterior
+```
+
+`LinearRing` is similar to a `LineString`, but it it must be:
+    1. a closed loop
+    2. cannot intersect itself
+
+`Polygon`s can be easily formed from `LinearRing`s but not all `LineString`s can be transformed into polygons.
+
+```{python}
+print("Polygon Exterior Length: ", poly.exterior.length)
+poly.exterior.length
+```
+
+
+## `Polygon`: example II
+
+```{python}
+exterior = [(-180, 90), (-180, -90), (180, -90), (180, 90)]
+poly_without_hole = Polygon(shell=exterior)
+poly_without_hole
+```
+
+```{python}
+linestring_from_exterior = LineString(exterior)
+linestring_from_exterior
+```
+
+## `Polygon`: example II with a hole
+
+```{python}
+# Define the hole coordinates (a single hole in this case)
+holes_coordinates = [[(-170, 80), (-170, -80), (170, -80), (170, 80)]]
+poly_with_hole = Polygon(shell=exterior, holes=holes_coordinates)
+poly_with_hole
+```
+
+
+
+## Do-pair-Share
+
+1.  Create a triangle
+2.  Create a square
+3.  Create a circle (hint: look up the `buffer` method in `shapely`)
+
+
+## geo data in vectors: summary
+
+| Data type    | Well-known text (WKT)                  |
+|--------------|----------------------------------------|
+| `Point`      | `(25 60.5)`                            |
+| `LineString` | `(24.5 61, 25 60.5, 25.5 61)`          |
+| `Polygon`    | `((24.5 61, 25 60.5, 25.5 61, 24.5 61))` |
+
+Methods
+
+-   any type: `.coords`, `.x`, `.xy`, `.wkt`
+-   `LineString` or `Polygon`: `.centroid`, `.length`
+-   `Polygon`: `.bounds`, `.area`, `.exterior`

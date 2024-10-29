@@ -1,0 +1,430 @@
+---
+title: "Spatial II"
+author: "Peter Ganong and Maggie Shi"
+date: today
+date-format: long
+execute: 
+    echo: true
+format:
+    beamer:
+        toc: true
+        fig-height: 2.5
+        include-in-header: header_pagenrs.tex
+include-before-body:
+  text: |
+    \RecustomVerbatimEnvironment{verbatim}{Verbatim}{
+      showspaces = false,
+      showtabs = false,
+      breaksymbolleft={},
+      breaklines
+    }
+    
+--- 
+<!--
+---
+title: "Spatial II"
+author: "Peter Ganong and Maggie Shi"
+date: today
+date-format: long
+toc: false
+execute: 
+    echo: true
+format:
+    html:
+        toc: false 
+---
+-->
+# Introduction to data structures in geopandas (6.2)
+
+## Geopandas roadmap
+
+In practice, we won't be coding our geodata by hand... Instead we are going to use shapefiles!
+
+```{python}
+import geopandas as gpd
+```
+
+
+Roadmap
+
+-   Vocabulary
+-   File formats
+-   Read in data
+-   Preview data
+
+## Define vocabulary
+
+Vocabulary
+
+-   A `GeoDataFrame` is basically like a `pandas.DataFrame` that contains dedicated columns for storing geometries.
+    - We will start with examples with a single column and later teach you how to use more than one column
+-   That column is called a `GeoSeries`. This can be any of data types (point, line, polygon) from the prior section. All of the methods you saw in the last section can also be used on a `GeoSeries`
+
+
+## File format I: Shapefile
+
+-   consists of at least three files `.shp` has feature geometrics, `.shx` has a positional index, `.dbf` has attribute information
+-   Usually also have `.prj` which describes the Coordinate Reference System (CRS)
+-   When you read in `map.shp` it automatically reads the rest of them as well to give you proper GeoDataFrame composed of geometry, attributes and projection.
+
+
+## Coordinate Reference Systems
+- Coordinate Reference System (CRS) is a combination of:
+    - "Datum": origin of latitude and longitude 
+    - "Project": representation of curved surface onto flat map
+- Most common CRS: WGS84 (used for GPS)
+- All coordinates are consistent *within* a CRS, but not always *across* CRS's
+- Different CRS's suit different needs
+    - optimized for local vs. global accuracy
+    - different approaches to approx. shape of the earth
+    - distance is measured in different units: degrees, miles, meters
+- Each system is associated with a unique *EPSG code*. Searchable on [https://epsg.io](https://epsg.io)
+    - (Aside: EPSG stands for European Petroleum Survey Group)
+    - These codes are used to convert one CRS into another
+
+<!-- ZZZZ here I would go to the epsg link and search up WGS84 to show that it is EPSG number 4326. https://epsg.io/4326. 
+Then you can look up "Illinois" and show that there are Illinois-east and Illinois-west-specific CRS's. 
+The skill they should learn is what a CRS is and how to look up the EPSG numbers so that they can transform from one CRS to another: https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.to_crs.html  -->
+
+
+## Reading a Shapefile `.shp`
+
+```{python}
+#in same dir:  `.shx` and `.dbf`
+filepath = "data/shp/austin_pop_2019.shp"
+data = gpd.read_file(filepath)
+```
+
+
+## File format II: GeoPackage
+
+-   single file `.gpkg`
+-   Supports both raster and vector data
+-   Efficiently decodable by software, particularly in mobile devices
+
+GeoPackage is more modern, but you will encounter shapefiles everywhere you look so good to be familiar with it.
+
+## Reading a GeoPackage `gpkg`
+
+```{python}
+filepath = "data/austin_pop_2019.gpkg"
+data = gpd.read_file(filepath)
+type(data)
+```
+
+
+
+
+## Previewing a `GeoDataFrame`
+
+```{python}
+data.head()
+```
+
+
+
+## Previewing a `GeoSeries`
+
+```{python, fig-align="center" height=70%}
+#| fig-height: 3
+data.plot()
+```
+
+Discussion question: Why isn't it enough to just to `head()`?
+
+
+<!-- ZZZ solution: because WKT isn't intellgible to you for sanity checking. But seeing an actual map is. Also, note that the WKT are not comparable to the WKT we saw in examples earlier because they're on different coordinate reference systems? -->
+
+## Geopandas summary
+
+-   `GeoDataFrame` and `GeoSeries` are the counterparts of `pandas.DataFrame` and `pandas.Series`
+-   `.shp` and `.gpkg` are two ways of storing geo data
+-   Always plot your map before you do anything else
+
+# Geometries in geopandas (6.2)
+
+## geometries: roadmap
+
+-   methods applied to `GeoSeries`
+-   my first choropleth
+
+<!-- MS to GGG: fixed small typo throughout - it's "choropleth," not "chloropleth." Before I taught spatial I also could have sworn it was called chloropleth too! -->
+
+## `GeoSeries`
+
+```{python}
+type(data["geometry"])
+```
+
+<!--PG note to self: textbook uses inconsistent syntax for extracting geometry in different places. I have made it consistent to improve clarity-->
+
+## `head()`
+
+```{python}
+data["geometry"].head()
+```
+
+## calculate area (in km\^2)
+
+```{python}
+data["geometry"].area
+```
+
+## add column to data frame
+
+```{python}
+#data.area is just a shorthand for data.geometry.area
+data["area_km2"] = data.area / 1000000
+data.head()
+```
+<!-- MS to GGG: how do we know that the area is in meters? -->
+## my first choropleth
+
+```{python}
+data.plot(column="area_km2", legend=True)
+```
+
+Why is this a nearly useless set of colors?
+<!--Usually we do choropleths based on attributes. Will do this in the next section of lecture.-->
+
+## geometries: summary
+
+-   can do all the same operations on a `GeoSeries` that you would do on any other polygon, like `Area`
+-   `data.plot(column="var")` draws a choropleth map with shading corresponding to the highlighted variable
+
+
+# Common geometric operations (6.3)
+
+## common geometric operations: roadmap
+
+* load and explore data
+* methods
+    * centroid
+    * bounding box
+    * buffer
+    * dissolve
+    * spatial join
+* do-pair-share
+
+## Austin, continued
+
+(The textbook uses a slightly different file here, unclear why.)
+```{python}
+filepath = "data/austin_pop_density_2019.gpkg"
+data = gpd.read_file(filepath)
+```
+
+## explore the data I
+```{python}
+data.head()
+```
+
+## explore the data II
+```{python}
+type(data["geometry"].values[0])
+```
+
+## explore the data III
+```{python out-height = 1.5}
+import matplotlib.pyplot as plt
+data.plot(facecolor="none", linewidth=0.2)
+plt.axis("off")
+plt.show()
+```
+
+- Import `matplotlib.pyplot` to access additional plotting options (e.g., x and y labels, title)
+- We turn the axis off because the WKT is not particularly informative
+
+
+## explore the data IV
+```{python out-height = 1.5}
+data.plot(column="pop_density_km2")
+plt.axis("off")
+plt.show()
+```
+
+- `facecolor` (or `fc` or `color`) defines a uniform color across all geometries
+- whereas `columns` generates colors based on the underlying values 
+
+## methods: centroid I
+
+What it is: arithmetic mean position of all the points in a polygon
+<!-- MS to GGG: this used to read "arithmetic mean position of all the points in the surface of the figure", but I think "polygons" is more accurate? -->
+
+Sample use case: measuring distance between center of each multipolygon
+
+```{python}
+data["geometry"].centroid.head()
+```
+
+## methods: centroid II
+```{python}
+data.centroid.plot(markersize=1)
+plt.axis("off")
+plt.show()
+```
+
+## methods: bounding box definition
+
+What it is: the tightest possible rectangle around a shape, capturing all of its points within this rectangle. 
+
+Sample use case: filtering a larger spatial dataset to subset of interest
+
+## methods: bounding box for each polygon I
+
+```{python}
+data.envelope.head()
+```
+
+## methods: bounding box for each polygon II
+```{python}
+data.envelope.plot()
+```
+
+
+## methods: bounding box for whole data I
+```{python}
+data.total_bounds
+```
+
+## methods: bounding box for whole data II
+Flashback to section 6.1
+```{python}
+from shapely import Point, Polygon
+point1 = Point(data.total_bounds[0], data.total_bounds[1])
+point2 = Point(data.total_bounds[2], data.total_bounds[1])
+point3 = Point(data.total_bounds[2], data.total_bounds[3])
+point4 = Point(data.total_bounds[0], data.total_bounds[3])
+poly = Polygon([point1, point2, point3, point4])
+#poly
+```
+- *Note*: the order in which you put these points together matters, and you'll get all sorts of interesting shapes with different orders!
+
+<!-- PG to MS:
+1. data.union_all().envelope should also work, but it is throwing an error for me, I'm curious if it works for you
+2. One fun thing I learned by accident is that if you put the points in a different order that you get all sorts of interesting shapes. Not sure we really care about this, but could be a fun short in-class exercise
+
+MS to GGG: I'm getting "AttributeError: 'GeoDataFrame' object has no attribute 'union_all'"
+Very odd since there's documentation for it... https://geopandas.org/en/latest/docs/reference/api/geopandas.GeoSeries.union_all.html
+
+I added a line on that second point!
+-->
+
+## methods: buffer I
+
+What it is: shape representing all points that are less than a certain distance from the original shape
+
+Sample use case: how many stores or parks near a neighborhood
+
+<!-- CC additional suggestion for motivations which I did not include for space reasons
+* geometries that don’t line up. Coasts are a moving target. Some geometries will go out into the water. Others will have a well-defined coast. 
+* Also for selecting for the spatial relationships
+-->
+
+## methods: buffer II
+
+```{python}
+data.buffer(1000).plot(edgecolor="white") #1000 meters
+plt.axis("off")
+plt.show()
+```
+
+## methods: dissolve I
+
+What it is: combining geometries into coarser spatial units based on some attributes. 
+
+Sample use case: construct the geometries that you want to serve with public transit
+
+```{python}
+# Create a new column and add a constant value
+data["dense"] = 0
+
+# Filter rows with above average pop density and update the column dense
+data.loc[data["pop_density_km2"] > data["pop_density_km2"].mean(), "dense"] = 1
+data.dense.value_counts()
+```
+
+<!-- MS to GGG: this would be a great discussion question (if the comment was removed): what is that line of code doing? Why would this relate to the sample use described above? Answer: say the city can only serve half of the areas with public transit and wants to create a map with just those areas combined.-->
+
+## methods: dissolve II
+```{python}
+dissolved = data[["pop2019", "area_km2", "dense", "geometry"]].dissolve(
+    by="dense", aggfunc="sum"
+)
+#aggregation step set index to "dense", reset to default
+dissolved = dissolved.reset_index()
+dissolved
+```
+
+- Aggregating alters the way the data is indexed and makes the grouping variable the index
+- We need to reset it in order to plot, since some plotting libraries expect data to be indexed in a specific way
+
+<!--
+PG to MS not sure if we need more detail here. If you want more detail see the conversation here, but that feels like TMI
+https://chatgpt.com/share/66eb10ee-3a10-800a-bee6-89851e220d69
+
+MS to GGG: I was a little confused, so I added in the bullets above. 
+-->
+
+## methods: dissolve III
+```{python}
+dissolved.plot(column="dense")
+plt.axis("off")
+plt.show()
+```
+
+Discussion Question: is this a good map? What can we do to improve it?
+
+<!-- ZZZ: no -- the reader has no idea what purple and yellow mean. It would be better if we added a legend that indicates that purple areas are above-median in population density while yellow is below-median. -->
+
+
+## methods: spatial join
+
+Spatial join: find the closest neighbor.
+
+(Contrived) example: Join Austin tracts to themselves. How many tracts should we expect to get?
+
+```{python}
+data_for_join = data[["tract", "geometry"]]
+print("N tracts " + str(len(data_for_join)))
+join_to_self = gpd.sjoin_nearest(data_for_join, data_for_join, how='inner', distance_col="distance")
+```
+
+
+## methods: spatial join II
+
+
+```{python}
+print("N tracts w closest neighbor " + str(len(join_to_self)))
+join_to_self.head(4)
+```
+
+
+## common geometric operations: summary
+
+* methods 
+    * centroid computes arithmetic mean of points in the polygon
+    * bounding box expands polygon in a rectangle
+    * buffer expands polygon in every direction
+    * dissolve combines several polygons
+    * spatial join finds nearest neighbor
+* do-pair-share
+
+## do pair share
+
+Goal: Create and plot a 500m buffer zone around the dense areas in Austin.
+
+Steps
+
+1. From the `dissolved` `GeoDataFrame`, get the polygon for the dense areas
+2. Create a new geometry object called `geo`, which is the dense areas with a 500m buffer
+3. `geo.plot()` 
+
+After you are done, here are some cosmetic suggestions:
+
+* Start with a grey plot of all of the Austin boundaries: `austin = data.plot(color="grey")`
+* Make your buffer transparent
+* Putting it all together `geo.plot(ax = austin, alpha=0.5)`
+    - This plots the `geo` object with 50% transparency, on top of axes based on the `austin` object
+
+

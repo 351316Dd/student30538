@@ -1,0 +1,28 @@
+---
+title: "Spatial I DPS"
+author: "Peter Ganong and Maggie Shi"
+date: today
+date-format: long
+execute: 
+    echo: true
+format:
+    html:
+        toc: true
+---
+
+
+## Do-pair-Share Solutions
+
+```{python}
+from shapely import Polygon, Point
+# Triangle
+Polygon([(0, 0), (2, 4), (4, 0)])
+
+# Square
+Polygon([(0, 0), (0, 4), (4, 4), (4, 0)])
+
+# Circle (using a buffer around a point)
+point = Point((0, 0))
+point.buffer(1)
+
+```

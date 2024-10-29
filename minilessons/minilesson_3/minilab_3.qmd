@@ -1,0 +1,229 @@
+---
+title: "Minilab 3: Code style (in Python with VSCode)"
+subtitle: "Data and Programing II (Ganong and Shi)"
+author: Andre Oviedo Mendoza
+date: today
+date-format: long
+format: 
+    revealjs:
+        slide-number: true
+        theme: simple
+        toc: true
+        toc-depth: 1
+        toc-title: Agenda
+        highlight-style: github
+---
+
+# What is Code Style? Why is Code Style Important?
+
+## What is Code Style?
+
+- A set of conventions for writing code
+- Makes code more readable and maintainable
+- [PEP 8](https://peps.python.org/pep-0008/): Official style guide for Python code
+    - PEP: [Python Enhancement Proposal](https://peps.python.org/)
+    - Provides coding conventions for Python code
+
+::: {.notes}
+    Segway into the next topic which is why.
+:::
+
+## Why is Code Style Important?
+
+- Reduces errors and bugs
+- Facilitates code maintenance
+- Enhances collaboration among developers
+
+
+# Code examples
+
+## Bad Style
+
+```{python}
+#| echo: true
+
+# Incorrect indentation (should be 4 spaces)
+def bad_indentation():
+  for i in range(10):
+    if i % 2 == 0:
+     print(i)
+
+# Incorrect whitespace
+x=[1,2,3]
+y = x[ 0 ]
+
+# Incorrect function and class definitions
+def bad_function_def(a, b):
+    return a+b
+```
+
+- Unclear function name
+- No docstring
+- Inconsistent indentation
+- Single-letter variable names
+
+---
+
+```{python}
+#| echo: true
+class myclass:
+    def __init__(self,a,b):
+        self.a=a
+        self.b=b
+    def do_something(self):
+        return self.a*self.b+2
+```
+
+- Improper class naming (should be **C**amel**C**ase)
+- No docstrings
+- Inconsistent spacing around operators and after commas
+- Unclear method name
+
+## Good Style
+
+```{python}
+#| echo: true
+def calculate_average(numbers):
+    """Calculate the average of a list of numbers."""
+    if not numbers:
+        return 0
+    total = sum(numbers)
+    count = len(numbers)
+    return total / count
+```
+
+- Function name: snake_case for functions and variables and CamelCase for classes
+- Docstring explaining the function
+- Meaningful variable names
+
+----
+
+```{python}
+#| echo: true
+class Rectangle:
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+
+    def area(self):
+        """Calculate the area of the rectangle."""
+        return self.width * self.height
+
+    def perimeter(self):
+        """Calculate the perimeter of the rectangle."""
+        return 2 * (self.width + self.height)
+```
+
+- Clear class and method names
+- Docstrings for methods
+- Consistent indentation
+- Logical organization of methods
+
+## Descriptive vs Short Variable Names
+
+- Descriptive names are better for readability and maintainability
+- Short names can be used for temporary variables or loop counters
+
+----
+
+```{python}
+#| echo: true
+#| eval: false
+# Short but unclear
+n = 0
+for i in u:
+    if i.s == "a":
+        n += 1
+
+# Descriptive and clear
+active_user_count = 0
+for user in user_list:
+    if user.status == "active":
+        active_user_count += 1
+```
+
+----
+## Why Descriptive Usually Wins:
+
+- Code is read many more times than it's written
+- Modern IDEs have autocomplete, negating typing overhead
+- Code maintenance costs far outweigh initial development time
+- Clear names make code reviews more efficient
+
+
+# Autoformatting Code
+
+- Automatically applies style rules to your code
+- Saves time and ensures consistency
+- Popular tools: Black, autopep8, YAPF
+
+::: {.notes}
+    Mention that we will be using autopep8 and that we will not require them to use it.
+:::
+
+## autopep8
+
+- Automatically formats Python code to conform to PEP 8
+- Can fix issues like:
+  - Extraneous whitespace
+  - Indentation
+  - Imports ordering
+  - Line length
+
+## Using autopep8 in VSCode
+
+1. Install the "autopep8" extension in VSCode
+2. Place cursor inside a code chunk
+3. Right-click and select "Format Cell" (keyboard shortcut might vary depending on the OS)
+
+::: {.notes}
+    Go into VS
+:::
+
+## Fixing Bad Style Example 1 with autopep8
+
+Before:
+```{python}
+#| echo: true
+def f(x):
+ y=x*2
+ z=y+1
+ return z
+```
+
+After:
+```{python}
+#| echo: true
+def f(x):
+    y = x*2
+    z = y+1
+    return z
+```
+
+- Indentation fixed
+- Spaces added around operators
+- **Still needs manual improvements**
+
+## Style Issues Not Fixed by Autoformatters
+
+- Meaningful variable and function names
+- Appropriate comments and docstrings
+- Logical code organization
+- Avoiding redundant or overly complex code
+
+::: {.notes}
+    Examples of manual improvements:
+    - Use of camelCase for class names
+    - Use of snake_case for variable and function names
+    - Use of docstrings
+    - Use of triple quotes for multi-line strings
+    - Use of f-strings for string formatting
+    - Use of parentheses for multi-line statements
+:::
+
+## Best Practices for Code Style {visibility="uncounted"}
+
+1. Follow PEP 8 guidelines
+2. Use meaningful names for variables, functions, and classes
+3. Write clear comments and docstrings
+5. Use consistent indentation and spacing

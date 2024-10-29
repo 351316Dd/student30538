@@ -1,0 +1,33 @@
+---
+title: "Kickoff "
+author: "Peter Ganong and Maggie Shi"
+date: October 28, 2024
+date-format: long
+format: 
+    beamer:
+        aspectratio: 169
+        theme: default
+        header-includes: \renewcommand{\tightlist}{\setlength{\itemsep}{3ex}\setlength{\parskip}{0pt}}
+            \setbeamertemplate{footline}[frame number]
+            \usepackage{fvextra}
+            \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+            \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,commandchars=\\\{\}}
+---
+
+## Announcements
+* "Final project proposal" is up on Canvas under quizzes. Both you and your partners need to submit. Due Fri Nov 1 at midnight. 
+    * will count as a quiz grade, graded for completion
+* PS4
+    * New github classroom assignment for PS4. Link is in the canvas announcement.
+    * We will no longer pair people. If you do not have a partner and would like to find one, use **[this (link)](https://docs.google.com/spreadsheets/d/1PO7mgU-pRIbQxNqzzQ0ZBSLy8Beg2EE1LmAwpuOaga8/edit?gid=0#gid=0)** google sheet. 
+
+## Announcements
+* Problem set 2 grades released: Mean 86.7, median 89.25, sd 9.9
+* Google Form to indicate who helped you on problem set 3: **[this (link)](https://docs.google.com/forms/d/1-zzHx762odGlpVWtgdIC55vqF-j3gqdAp6Pno1rIGK0/edit)**
+
+## Self-sufficiency
+* Nudging towards self-sufficiency: new norm for Ed posts. 
+* Tell us how you tried to troubleshoot. Examples:
+    * “here is the chatgpt prompt I tried” 
+    * “here is the help page I found that is relevant my error/issue but I don’t understand xyz in it."
+
