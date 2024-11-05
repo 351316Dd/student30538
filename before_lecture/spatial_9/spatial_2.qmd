@@ -8,32 +8,46 @@ execute:
 format:
     beamer:
         toc: true
-        fig-height: 2.5
+        fig-height: 2
         include-in-header: header_pagenrs.tex
-include-before-body:
-  text: |
-    \RecustomVerbatimEnvironment{verbatim}{Verbatim}{
-      showspaces = false,
-      showtabs = false,
-      breaksymbolleft={},
-      breaklines
-    }
-    
---- 
-<!--
+
+header-includes: |
+  % Resolve table label conflict with hyperref
+  \PassOptionsToPackage{table}{hyperref}
+  \usepackage{hyperref}
+  \let\theHtable\relax  % Prevent conflicts with hyperref
+  \usepackage{bookmark} % Manage bookmarks reliably
+
+  % Load fancyvrb for verbatim blocks
+  \usepackage{fancyvrb}
+  \RecustomVerbatimEnvironment{verbatim}{Verbatim}{
+    showspaces=false,
+    showtabs=false,
+    fontsize=\small
+  }
+
+  \renewcommand{\tightlist}{\setlength{\itemsep}{5ex}\setlength{\parskip}{0pt}}
+        \setbeamertemplate{footline}[frame number]
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+        \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,commandchars=\\\{\}}
+
 ---
-title: "Spatial II"
-author: "Peter Ganong and Maggie Shi"
-date: today
-date-format: long
-toc: false
-execute: 
-    echo: true
-format:
-    html:
-        toc: false 
----
--->
+
+
+<!-- # ---
+# title: "Spatial II"
+# author: "Peter Ganong and Maggie Shi"
+# date: today
+# date-format: long
+# toc: false
+# execute: 
+#     echo: true
+# format:
+#     html:
+#         toc: false 
+# --- -->
+
 # Introduction to data structures in geopandas (6.2)
 
 ## Geopandas roadmap
@@ -82,10 +96,6 @@ Vocabulary
     - (Aside: EPSG stands for European Petroleum Survey Group)
     - These codes are used to convert one CRS into another
 
-<!-- ZZZZ here I would go to the epsg link and search up WGS84 to show that it is EPSG number 4326. https://epsg.io/4326. 
-Then you can look up "Illinois" and show that there are Illinois-east and Illinois-west-specific CRS's. 
-The skill they should learn is what a CRS is and how to look up the EPSG numbers so that they can transform from one CRS to another: https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.to_crs.html  -->
-
 
 ## Reading a Shapefile `.shp`
 
@@ -121,19 +131,17 @@ type(data)
 data.head()
 ```
 
-
+\normalsize
 
 ## Previewing a `GeoSeries`
 
 ```{python, fig-align="center" height=70%}
 #| fig-height: 3
-data.plot()
+data.plot().set_axis_off()
 ```
 
 Discussion question: Why isn't it enough to just to `head()`?
 
-
-<!-- ZZZ solution: because WKT isn't intellgible to you for sanity checking. But seeing an actual map is. Also, note that the WKT are not comparable to the WKT we saw in examples earlier because they're on different coordinate reference systems? -->
 
 ## Geopandas summary
 
@@ -160,32 +168,42 @@ type(data["geometry"])
 
 ## `head()`
 
+
+
 ```{python}
 data["geometry"].head()
 ```
 
-## calculate area (in km\^2)
+\normalsize
+
+## calculate area
 
 ```{python}
 data["geometry"].area
 ```
 
+. . .
+
+**In-class exercise**: what unit is this? Open the `austin_pop_2019.prj` file in Quarto, then copy into ChatGPT and query it.
+
 ## add column to data frame
 
+
+\small
 ```{python}
-#data.area is just a shorthand for data.geometry.area
 data["area_km2"] = data.area / 1000000
-data.head()
+data[['tract', 'area_km2', 'geometry']].head()
 ```
-<!-- MS to GGG: how do we know that the area is in meters? -->
+
+\normalsize
+
 ## my first choropleth
 
 ```{python}
-data.plot(column="area_km2", legend=True)
+data.plot(column="area_km2", legend=True).set_axis_off()
 ```
 
-Why is this a nearly useless set of colors?
-<!--Usually we do choropleths based on attributes. Will do this in the next section of lecture.-->
+**Discussion question** -- are the colors in this graph useful? 
 
 ## geometries: summary
 
@@ -199,16 +217,16 @@ Why is this a nearly useless set of colors?
 
 * load and explore data
 * methods
+\vspace{2ex}
     * centroid
     * bounding box
     * buffer
     * dissolve
-    * spatial join
 * do-pair-share
 
 ## Austin, continued
 
-(The textbook uses a slightly different file here, unclear why.)
+(The textbook uses a slightly different file here, unclear why to us.)
 ```{python}
 filepath = "data/austin_pop_density_2019.gpkg"
 data = gpd.read_file(filepath)
@@ -225,50 +243,67 @@ type(data["geometry"].values[0])
 ```
 
 ## explore the data III
-```{python out-height = 1.5}
+\small
+```{python out-height = 1}
 import matplotlib.pyplot as plt
-data.plot(facecolor="none", linewidth=0.2)
-plt.axis("off")
-plt.show()
+data.plot(facecolor="none", linewidth=0.2).set_axis_off()
+
 ```
 
-- Import `matplotlib.pyplot` to access additional plotting options (e.g., x and y labels, title)
-- We turn the axis off because the WKT is not particularly informative
-
+- Import `matplotlib.pyplot` to access additional plotting options
+- `facecolor` (or `fc` or `color`) defines a uniform color across all geometries
 
 ## explore the data IV
-```{python out-height = 1.5}
-data.plot(column="pop_density_km2")
-plt.axis("off")
-plt.show()
+```{python out-height = 1}
+data.plot(column="pop_density_km2").set_axis_off()
 ```
 
-- `facecolor` (or `fc` or `color`) defines a uniform color across all geometries
-- whereas `columns` generates colors based on the underlying values 
+- in contrast to `facecolor`, `columns` generates colors based on the underlying values 
 
 ## methods: centroid I
 
-What it is: arithmetic mean position of all the points in a polygon
-<!-- MS to GGG: this used to read "arithmetic mean position of all the points in the surface of the figure", but I think "polygons" is more accurate? -->
-
-Sample use case: measuring distance between center of each multipolygon
+**What it is**: arithmetic mean position of all the points in a polygon
 
 ```{python}
 data["geometry"].centroid.head()
 ```
 
+Note the data type: we're making a new geometry object
+
 ## methods: centroid II
 ```{python}
-data.centroid.plot(markersize=1)
+data.centroid.plot(markersize=1).set_axis_off()
 plt.axis("off")
 plt.show()
 ```
 
+## example use cases: centroid
+* measuring distance between center of each multipolygon
+* simplifying data representation for dense or complex polygons
+* label placement in mapping
+
+<!-- ## centroid example outside polygon
+
+![](pictures/census-usa-example_zoom19.png){height="80%"}
+
+Source: https://spatialanalysisonline.com/HTML/centroids_and_centers.htm -->
+
+## aside: change active geometry
+
+* a `GeoDataFrame` can store multiple `Geoseries`
+* and we can switch which one is the "main" one -- the one that `geopandas` will by default do spatial operations on
+
+\small
+```{python}
+data["centroid"] = data.centroid
+data.set_geometry("centroid")
+data[['tract', 'centroid', 'geometry']].head()
+```
+\normalsize
+
 ## methods: bounding box definition
 
-What it is: the tightest possible rectangle around a shape, capturing all of its points within this rectangle. 
-
-Sample use case: filtering a larger spatial dataset to subset of interest
+**What it is**: the tightest possible rectangle around a shape, capturing all of its points within this rectangle. 
 
 ## methods: bounding box for each polygon I
 
@@ -278,16 +313,30 @@ data.envelope.head()
 
 ## methods: bounding box for each polygon II
 ```{python}
-data.envelope.plot()
+data.envelope.plot().set_axis_off()
 ```
 
+## example use cases: bounding box
+- use this when you don’t have a better way to filter the data
+- when would you not have a better way?
+    - when pulling data to make a map. maps are rectangular because screens are rectangular
+    - when you want to do something fast computationally. because it just compares points in XY space to X_min, X_max, Y_min, Y_max, it is much faster than using a spatial join (discussed below)
 
-## methods: bounding box for whole data I
+## methods: bounding box for whole data
+We can also retrieve the corner coordinates of the bounding box for a `GeoDataFrame`
+
+\small
 ```{python}
 data.total_bounds
 ```
+\normalsize
 
-## methods: bounding box for whole data II
+## use cases: bounding box for whole data
+- identifying total coverage area of a map
+- making cropped or zoomed-in maps -- start with the overall bounding box, then "zoom" in by reducing coordinates
+- make loading large spatial datasets easier -- load only a subset of the data based on the bounding box
+
+<!-- ## methods: bounding box for whole data II
 Flashback to section 6.1
 ```{python}
 from shapely import Point, Polygon
@@ -301,130 +350,256 @@ poly = Polygon([point1, point2, point3, point4])
 - *Note*: the order in which you put these points together matters, and you'll get all sorts of interesting shapes with different orders!
 
 <!-- PG to MS:
-1. data.union_all().envelope should also work, but it is throwing an error for me, I'm curious if it works for you
-2. One fun thing I learned by accident is that if you put the points in a different order that you get all sorts of interesting shapes. Not sure we really care about this, but could be a fun short in-class exercise
+data.union_all().envelope should also work, but it is throwing an error for me
 
-MS to GGG: I'm getting "AttributeError: 'GeoDataFrame' object has no attribute 'union_all'"
+MS to PG: I'm also getting an error.  "AttributeError: 'GeoDataFrame' object has no attribute 'union_all'"
 Very odd since there's documentation for it... https://geopandas.org/en/latest/docs/reference/api/geopandas.GeoSeries.union_all.html
+--> 
 
-I added a line on that second point!
--->
 
 ## methods: buffer I
 
-What it is: shape representing all points that are less than a certain distance from the original shape
+**What it is**: shape representing all points that are less than a certain distance from the original shape
 
-Sample use case: how many stores or parks near a neighborhood
 
-<!-- CC additional suggestion for motivations which I did not include for space reasons
-* geometries that don’t line up. Coasts are a moving target. Some geometries will go out into the water. Others will have a well-defined coast. 
-* Also for selecting for the spatial relationships
--->
 
 ## methods: buffer II
-
+\small 
 ```{python}
-data.buffer(1000).plot(edgecolor="white") #1000 meters
+data.buffer(1000).plot(edgecolor="white").set_axis_off()
 plt.axis("off")
 plt.show()
 ```
 
+\normalsize 
+Since our CRS is in meters, the buffer is defined to be 1000 meters around the border
+
+## methods: buffer III
+\small 
+```{python}
+data.centroid.buffer(1000).plot(edgecolor="white").set_axis_off()
+plt.axis("off")
+plt.show()
+```
+
+## example use cases: buffer
+* how many stores or parks near a neighborhood
+* identify safety/hazard zones around buildings 
+* add bike lines or parking spots along roads
+* working with geometries that have complicated borders (e.g. coasts)
+* selecting nearby geometries -- example below with spatial join
+
 ## methods: dissolve I
 
-What it is: combining geometries into coarser spatial units based on some attributes. 
+**What it is**: combining geometries into coarser spatial units based on some attributes. 
 
-Sample use case: construct the geometries that you want to serve with public transit
+## example use cases: dissolve
+* aggregating from smaller spatial unit to larger: counties to states, census tracts to school districts
+* reducing complexity of large, dense spatial datasets
+
+* **Example with Austin data**: we will construct the geometries that you might want to serve with public transit by identifying *dense vs. non-dense* tracts
+
+## dissolve example I
 
 ```{python}
-# Create a new column and add a constant value
 data["dense"] = 0
 
-# Filter rows with above average pop density and update the column dense
-data.loc[data["pop_density_km2"] > data["pop_density_km2"].mean(), "dense"] = 1
+data.loc[data["pop_density_km2"] > data["pop_density_km2"].quantile(0.75), "dense"] = 1
 data.dense.value_counts()
 ```
 
-<!-- MS to GGG: this would be a great discussion question (if the comment was removed): what is that line of code doing? Why would this relate to the sample use described above? Answer: say the city can only serve half of the areas with public transit and wants to create a map with just those areas combined.-->
 
-## methods: dissolve II
+## dissolve example II
+
 ```{python}
 dissolved = data[["pop2019", "area_km2", "dense", "geometry"]].dissolve(
     by="dense", aggfunc="sum"
 )
-#aggregation step set index to "dense", reset to default
 dissolved = dissolved.reset_index()
 dissolved
 ```
+\normalsize
 
 - Aggregating alters the way the data is indexed and makes the grouping variable the index
 - We need to reset it in order to plot, since some plotting libraries expect data to be indexed in a specific way
 
-<!--
-PG to MS not sure if we need more detail here. If you want more detail see the conversation here, but that feels like TMI
-https://chatgpt.com/share/66eb10ee-3a10-800a-bee6-89851e220d69
-
-MS to GGG: I was a little confused, so I added in the bullets above. 
--->
 
 ## methods: dissolve III
 ```{python}
-dissolved.plot(column="dense")
+dissolved.plot(column="dense").set_axis_off()
 plt.axis("off")
 plt.show()
 ```
 
-Discussion Question: is this a good map? What can we do to improve it?
+Discussion Question: What can we do to improve this map?
 
-<!-- ZZZ: no -- the reader has no idea what purple and yellow mean. It would be better if we added a legend that indicates that purple areas are above-median in population density while yellow is below-median. -->
-
-
-## methods: spatial join
-
-Spatial join: find the closest neighbor.
-
-(Contrived) example: Join Austin tracts to themselves. How many tracts should we expect to get?
-
-```{python}
-data_for_join = data[["tract", "geometry"]]
-print("N tracts " + str(len(data_for_join)))
-join_to_self = gpd.sjoin_nearest(data_for_join, data_for_join, how='inner', distance_col="distance")
-```
-
-
-## methods: spatial join II
-
-
-```{python}
-print("N tracts w closest neighbor " + str(len(join_to_self)))
-join_to_self.head(4)
-```
 
 
 ## common geometric operations: summary
 
 * methods 
+\vspace{2ex}
     * centroid computes arithmetic mean of points in the polygon
     * bounding box expands polygon in a rectangle
     * buffer expands polygon in every direction
     * dissolve combines several polygons
-    * spatial join finds nearest neighbor
 * do-pair-share
 
 ## do pair share
 
-Goal: Create and plot a 500m buffer zone around the dense areas in Austin.
+**Goal**: Create and plot a 500m buffer zone around the dense areas in Austin.
 
 Steps
 
-1. From the `dissolved` `GeoDataFrame`, get the polygon for the dense areas
-2. Create a new geometry object called `geo`, which is the dense areas with a 500m buffer
-3. `geo.plot()` 
-
+1. From the `dissolved` `GeoDataFrame`, get a single polygon for the dense areas
+    - Hint: you can use standard `pandas` commands to subset 
+2. Create a new geometry object called `geo`, which is the dense areas with a 500m buffer around them
+3. Plot your new geometry object `geo.plot()` 
+<!-- 
 After you are done, here are some cosmetic suggestions:
 
 * Start with a grey plot of all of the Austin boundaries: `austin = data.plot(color="grey")`
 * Make your buffer transparent
 * Putting it all together `geo.plot(ax = austin, alpha=0.5)`
-    - This plots the `geo` object with 50% transparency, on top of axes based on the `austin` object
+    - This plots the `geo` object with 50% transparency, on top of axes based on the `austin` object -->
+
+# Spatial Join and Nearest Neighbor Analysis (6.7, 6.8)
+## spatial Join and Nearest neighbor analysis: roadmap
+* spatial join: example with finding intersection between two layers
+* nearest neighbor analysis: identify neighbors of each census tract
+
+## Spatial Join
+**What it is**: retrieving attributes from one layer and transferring them into another layer based on their spatial relationship
+
+![](pictures/spatial-join-basic-idea.png){height="60%"}
+
+## Spatial Join: use cases
+Example use cases:
+
+- adding attributes from one geographic unit to another, smaller geographic unit: assigning county-level statistics to zip codes
+- using one layer to crop another 
+- identifying where two layers *do not* overlap
 
 
+
+## spatial join I
+**Example with Austin**: we want to identify all census tracts that are adjacent to the dense tracts
+
+Step 1: get polygon of dense zones 
+
+```{python}
+dense_zones = dissolved[dissolved['dense'] == 1]
+dense_zones.plot().set_axis_off()
+```
+
+## spatial join II
+
+Step 2: create 10-meter buffer around dense areas
+
+\small
+```{python}
+dense_buffer = dense_zones.copy()
+dense_buffer['geometry'] = dense_buffer.geometry.buffer(10)
+
+dense_buffer.plot(color="red", alpha=0.5).set_axis_off()
+```
+
+## spatial join III
+
+Step 3: find intersection between `data` and `dense_buffer`
+
+\small
+```{python}
+near_dense = gpd.sjoin(data, dense_buffer, how="inner", predicate="intersects")
+near_dense.plot(color="blue", alpha=0.3).set_axis_off()
+```
+
+## spatial join IV
+Step 4: plot `dense_zones` and `near_dense`
+
+\small
+```{python}
+fig, ax = plt.subplots()
+dense_zones.plot(ax=ax,color="red", alpha=0.5, label="Dense").set_axis_off()
+near_dense.plot(ax=ax,color="blue", alpha=0.3, label="Near Dense").set_axis_off()
+
+plt.show()
+```
+\normalsize
+
+## spatial join V
+Spatial join options:
+
+* `how`: `inner` (default), `left`, `right`
+* `predicate`: `intersects` (default), `contains`, `covered_by`, `covers`, `crosses`, `overlaps`, `touches`, `within`
+* Discussion question: what is another type of join we could have used to identify tracts next to dense areas?
+
+
+## methods: nearest neighbor analysis I 
+**What it is**: for every geography unit, find the other unit(s) that are closest in distance. 
+
+Example use cases: 
+
+- find closest voting center to an address
+- public transportation planning: how far is the closest metro stop?
+- real estate: how much did nearby houses sell for?
+
+## methods: nearest neighbor analysis II
+\small 
+```{python}
+data_for_join = data[["tract", "geometry"]]
+print("N tracts " + str(len(data_for_join)))
+```
+\normalsize
+**Example with Austin**: Join every Austin tract to its closest neighbor or neighbors. 
+
+## methods: nearest neighbor analysis III
+
+```{python}
+join_to_self = gpd.sjoin_nearest(
+    data_for_join,  #left df
+    data_for_join, #right df
+    how='inner', 
+    distance_col="distance"
+)
+```
+- you will always specify a left dataframe and a right dataframe
+- if both dataframes have the same variable, `sjoin_nearest` will add suffixes indicating if it comes from the left or the right dataframe
+- in our example, both left and right dataframes have the exact same columns
+
+
+
+## methods: nearest neighbor analysis IV
+```{python}
+print("N tracts w closest neighbor " + 
+    str(len(join_to_self)))
+join_to_self[['tract_left', 'tract_right', 'distance']].head(4)
+```
+
+Note that `002422` is considered its own neighbor!
+
+## methods: nearest neighbor analysis V
+\scriptsize
+```{python}
+neighbor_ids = join_to_self[join_to_self['tract_left'] == '002422']['tract_right']
+print(neighbor_ids)
+
+
+```
+
+## methods: nearest neighbor analysis VI
+\small
+```{python}
+tracts_of_interest = data[(data['tract'].isin(neighbor_ids))]
+tracts_of_interest.plot().set_axis_off()
+
+for idx, row in tracts_of_interest.iterrows():
+    centroid = row.geometry.centroid
+    plt.annotate(text=row['tract'], xy=(centroid.x, centroid.y),
+                 ha='center', fontsize=8)
+plt.show()
+```
+
+## summary: spatial join and nearest neighbor analysis 
+* Spatial joins and nearest neighbor analysis allow us to "join" different `Geodataframe`s based on space and proximity
+* Like regular joins, the order in which you specify left vs. right dataframe matters

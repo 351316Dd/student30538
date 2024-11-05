@@ -1,7 +1,7 @@
 ---
 title: "Kickoff "
 author: "Peter Ganong and Maggie Shi"
-date: October 28, 2024
+date: October 30, 2024
 date-format: long
 format: 
     beamer:
@@ -14,20 +14,43 @@ format:
             \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,commandchars=\\\{\}}
 ---
 
-## Announcements
-* "Final project proposal" is up on Canvas under quizzes. Both you and your partners need to submit. Due Fri Nov 1 at midnight. 
-    * will count as a quiz grade, graded for completion
-* PS4
-    * New github classroom assignment for PS4. Link is in the canvas announcement.
-    * We will no longer pair people. If you do not have a partner and would like to find one, use **[this (link)](https://docs.google.com/spreadsheets/d/1PO7mgU-pRIbQxNqzzQ0ZBSLy8Beg2EE1LmAwpuOaga8/edit?gid=0#gid=0)** google sheet. 
 
-## Announcements
-* Problem set 2 grades released: Mean 86.7, median 89.25, sd 9.9
-* Google Form to indicate who helped you on problem set 3: **[this (link)](https://docs.google.com/forms/d/1-zzHx762odGlpVWtgdIC55vqF-j3gqdAp6Pno1rIGK0/edit)**
+## MUD Final project
 
-## Self-sufficiency
-* Nudging towards self-sufficiency: new norm for Ed posts. 
-* Tell us how you tried to troubleshoot. Examples:
-    * “here is the chatgpt prompt I tried” 
-    * “here is the help page I found that is relevant my error/issue but I don’t understand xyz in it."
+* Timeline
+    * Idea/plan/partners -- now
+    * Work one week in Nov before Thanksgiving
+    * Mon-Tue-Wed before Thanksgiving
+    * you might have time after break depending on your slot (slots allocated randomly, will post schedule after the quiz due Friday closes).
+* Where to find datasets 
+    * Choose one connected to your policy interests. 
+    * It will be better for your job applications / portfolio if you choose the dataset, not me. 
+    * Public datasets are everywhere: Google cloud, Kaggle, city's open data portals, replication files for academic papers
 
+
+## PS3 debrief
+
+* Overall students did very well, not a lot of systematic or correlated errors.
+* Some students wrote answers and did not present any git output, we marked them down since we could not verify their answers
+
+## PS4 small changes I
+
+We updated the problem set in the student repo.
+
+* In "Calculate zip code’s distance to the nearest hospital", we simplified 2. You no longer have to create a function to see if the polygons intersect.
+* In "Calculate zip code’s distance to the nearest hospital", we eliminated 4a. You no longer have to time the join of the subset first.
+* If you did these already -- they will count as extra credit
+
+## PS4 small changes II
+
+* Mitch noted that there was a discrepancy in the template (which had subquestions) and the problem set (which in the student repo did not). Thank you!
+    * The problem set has been updated
+* The template was missing some of the header material
+    * This issue is fixed (but not needed ) 
+    * Going forward, we will put header material in exactly one place, which will be the template
+
+## Remaining tech issues with spatial packages
+- If you find you are still having issues with spatial packages:
+    1. Try to implement Dema's mini-lesson on virtual environments
+    2. Look at endorsed answers on Ed for solutions to edge cases (e.g., issue with `fiona`)
+    3. Post in Ed thread: we will have a TA reach out to 1-1

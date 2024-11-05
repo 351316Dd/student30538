@@ -1,0 +1,55 @@
+---
+title: "Kickoff "
+author: "Maggie Shi"
+date: November 4, 2024
+date-format: long
+format: 
+    beamer:
+        aspectratio: 169
+        theme: default
+        header-includes: \renewcommand{\tightlist}{\setlength{\itemsep}{3ex}\setlength{\parskip}{0pt}}
+            \setbeamertemplate{footline}[frame number]
+            \usepackage{fvextra}
+            \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+            \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,commandchars=\\\{\}}
+---
+
+
+## Timeline 
+* We have changed the order of the content for next 2 weeks -- updated timeline on Canvas
+* Problem set:
+\vspace{2ex}
+    * *Paired* problem set. 
+    * Opened last night, due this Saturday.
+* Workload
+\vspace{2ex}
+    * Partner 1 should be able to complete Step 1 after today's class 
+    * Partner 2 should be able to do subquestion a 
+    * We will also preview the skill required for Partner 2 to complete Step 2
+
+## Timeline 
+* Next 1.5 weeks: Shiny dashboards
+\vspace{2ex}
+    * Solo problem set
+    * Open next Sunday, due Saturday before Thanksgiving -- *2 weeks*
+    * Preview: 80-90% of problem set is doable by end of first week
+
+## This week's problem set 
+* Distribution
+\vspace{2ex}
+    * PDF is in student repo
+    * Template is on Canvas announcement
+* Gradescope submission. Two assignments
+\vspace{2ex}
+    * One for PDF
+    * One for code
+    * Make sure you declare the same partner for both
+* Partner matching [link (same as before)](https://docs.google.com/spreadsheets/d/1PO7mgU-pRIbQxNqzzQ0ZBSLy8Beg2EE1LmAwpuOaga8/edit?usp=sharing)
+
+## Expectations about Ed/OH availability
+* You should expect a response within 24 hours (and usually much less than that) during **regular working hours**: M-F, 9-5
+* Given the Saturday problem set deadline, we also have asked TAs to be on Ed Saturday mornings
+\vspace{2ex}
+    * Going forward, we will reallocate more TAs to cover Friday and Saturday
+    * But you should expect more delayed responses outside of these hours
+* As a reminder: TA and Professor Ganong's office hours are at lab. Mine are by [appointment (link)](https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ0_iNKrzlRV3LNXB8YUgG04ZMK7fUxVIp5KMabISmNwVdRh2LCM2nwkMEYLbHthc2SSdYmJ6nz2)
