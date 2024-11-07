@@ -1,0 +1,631 @@
+---
+title: "Webscraping"
+author: "Peter Ganong and Maggie Shi"
+date: today
+date-format: long
+format: 
+    beamer:
+        aspectratio: 169
+        theme: default
+        toc: true
+        header-includes:
+            \setbeamertemplate{footline}[frame number]
+            \usepackage{fvextra}
+            \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+            \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,commandchars=\\\{\}}
+---
+
+## Recap and Outline
+Last class, we covered:
+\vspace{2ex}
+
+- Intro to HTML: tags, attributes, and content 
+- Using `BeautifulSoup` to parse HTML and extract text
+
+. . .
+
+\vspace{2ex}
+Today, we'll cover:
+\vspace{2ex}
+
+- Making a web scraper dynamic so that it can "crawl" the web
+- Extracting and organizing data from *tables* on webpages
+- Webcraping etiquette
+
+
+```{python}
+#| echo: false
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+```
+
+# Web Crawlers
+
+## "Crawling" the Web: Intro 
+- One powerful way to harness web scraping tools is to use them to 'crawl' the web -- that is, to automatically navigate from page to page
+
+## Roadmap
+- Discuss use cases for web crawling
+
+- Walk through an example of developing a Wikipedia web crawler
+
+## Use cases for web crawling 
+- Web crawl when you want to visit multiple URLs
+- And the URLs are located in a structured or repetitive way 
+- This is especially useful if you don't know the exact URLs, but know that they link to each other
+
+## Example: scraping from a list of press releases  
+![](pictures/who_africa.png){ width=100% fig-align="center"}
+
+## Example: navigating from a directory with links   
+![](pictures/who_bulletin.png){ width=100% fig-align="center"}
+
+## Example: Wikipedia Crawler
+- Apparently, following the first link in the main text of a Wikipedia article repeatedly will lead to the 'Philosophy' page 97% of the time!  ([link](https://en.wikipedia.org/wiki/Wikipedia:Getting_to_Philosophy))
+- Let's create a web crawler to test this out, starting from the 'United States' Wikipedia page: [https://en.wikipedia.org/wiki/United_States (link)](https://en.wikipedia.org/wiki/United_States)
+
+. . .
+
+- *(Note: in the future, you will likely not be using web crawling in this way. However, we're going to use this as a simple example to illustrate the mechanics of setting up a web crawler. Wikipedia is a good place to do this because they won't block us if we access it too often.)*
+
+## Steps We Want our Crawler to Take
+- Step 1: Inspect the HTML of the first Wikipedia page we want to scrape
+
+. . .
+
+- Step 2: Parse HTML from first page and extract the first link 
+
+. . .
+
+- Step 3: Follow that link
+
+. . .
+
+- Step 4: If not on the Philosophy page, repeat the previous step
+
+. . .
+
+- Step 5: build in conditions to stop the loop
+    - In addition to checking for Philosophy
+    - To prevent an infinite loop, we will also stop if if we go to a link we've been to before
+    - Or if we've visited 50 links
+
+## Step 1: Inspect website and HTML
+
+- Start at [https://en.wikipedia.org/wiki/United_States (link)](https://en.wikipedia.org/wiki/United_States)
+
+![](pictures/wiki_1.png){ width=60% fig-align="center"}
+
+- The first in-text link is to "North America", so we should check for that
+
+## Step 1: Inspect website and HTML
+- Right click + Inspect...
+![](pictures/wiki_2.png){ width=60% fig-align="center"}
+
+- The main text links appear to be nested inside an  `<a>` tag which is in a `<p>` tag
+
+
+## Step 2: Parse HTML from first page and extract the first link 
+```{python}
+#| echo : true 
+
+url = "https://en.wikipedia.org/wiki/United_States"
+response = requests.get(url)
+
+soup = BeautifulSoup(response.content, 'lxml')
+
+```
+
+## Step 2: Parse HTML from first page and extract the first link 
+
+- Start by extracting anything with a `p` tag
+```{python}
+#| echo : true 
+p_tag = soup.find_all('p')
+```
+
+## Step 2: Parse HTML from first page and extract the first link 
+
+```{python}
+#| echo : true
+my_links = []                                #1
+for p in p_tag:                              #2
+    links = p.find_all('a', href=True)       #3     
+    for link in links:                       #4
+        my_links.append(link.get('href'))    #5
+
+```
+1. Create an empty list to store links
+2. Then loop through the `p` tags 
+3. Find the `a` tags with `href` attribute
+4. Loop through the `a` tags
+5. Append the value of the attribute to `my_links`
+
+. . .
+
+- Note: we have to work with for loops because `.find_all()` returns a *list*
+
+## Step 2: Parse HTML from first page and extract the first link 
+
+- Let's preview our saved links
+```{python}
+#| echo : true
+print(my_links[0:4])
+```
+
+. . .
+
+- The first link is indeed to the "North America" page!
+- But it's a *relative* path: the URL should be `'https://en.wikipedia.org/wiki/North_America'`
+
+## Step 2: Parse HTML from first page and extract the first link 
+- Modify our code: before appending to `my_links`, concatenate the relative path to get the absolute path
+\AddToHookNext{env/Highlighting/begin}{\small}
+```{python}
+#| echo : true
+my_links = []
+for p in p_tag:
+  links = p.find_all('a', href = True)  
+  for link in links:
+    my_links.append('https://en.wikipedia.org' + link.get('href'))
+
+print(my_links[0:2])
+
+```
+
+
+## Step 3: Follow the first link
+- Then to follow the link we collected, we simply make it the input to another request
+```{python}
+#| echo : true
+#| eval: true
+url = my_links[0]
+print(url)
+
+
+
+```
+
+- Our new `url` becomes the input into a new request and call to `BeautifulSoup`
+```{python}
+#| echo : true
+#| eval: true
+# repeating the previous step, but with the new URL
+response = requests.get(url)
+soup = BeautifulSoup(response.content, 'lxml')
+```
+
+## Step 4: Follow the first link and repeat
+```{python}
+#| echo : true
+#| eval: true
+p_tag = soup.find_all('p')
+my_links = []
+for p in p_tag:
+  links = p.find_all('a', href = True)  
+  for link in links:
+    my_links.append('https://en.wikipedia.org' + link.get('href'))
+```
+
+- Check the first link 
+
+```{python}
+#| echo : true
+#| eval: true
+print(my_links[0])
+```
+
+## Step 4: Follow the first link and repeat
+- We should go back to the 'North America' page to confirm that the first link is to 'Continent'
+
+![](pictures/wiki_3.png){ width=60% fig-align="center"}
+
+
+## Step 5: Build in conditions to stop the loop 
+Conditions to stop the loop:
+
+1. We've hit the Philosophy page
+2. We've been to this link before
+3. We've visited 50 links 
+
+. . . 
+
+- Let's start with the **third condition**: max out at visiting 50 links
+
+```{python}
+#| echo : true
+#| eval: false 
+for i in range(50):
+    # code to crawl here
+```
+
+## Step 5: Build in conditions to stop the loop 
+- Then the **first condition**: stop if we've hit the Philosophy page
+```{python}
+#| echo : true
+#| eval: false 
+for i in range(50):
+    # code to crawl here 
+    if url == "https://en.wikipedia.org/wiki/Philosophy": 
+        print('Ended up at Philosophy in ' + str(i) + ' tries!')
+        break
+    
+```
+- `break` exits the `for` loop as soon as the condition is triggered 
+
+## Step 5: Build in conditions to stop the loop 
+- Then we can tackle the **second condition**: exit if we've visited this link before 
+```{python}
+#| echo : true
+#| eval: false 
+visited_urls = []
+for i in range(50):
+    if url in visited_urls:
+        print('Stopped because ended up in a loop.')
+        break
+    # code to crawl here 
+    if url == "https://en.wikipedia.org/wiki/Philosophy": 
+        print('Ended up at Philosophy in ' + str(i) + ' tries!')
+        break
+    visited_urls.append(url)
+```
+- Initialize an empty list: `visited_urls[]`
+- `break` if the url we extract has already been visited
+- If none of the conditions to `break` are true, then add this url to `visited_urls`
+
+
+
+## Web Crawler: Summary 
+- We can go beyond scraping from individual URLs by crawling 
+- Crawler pulls in URLs stored in `a` tags
+- Crawling requires using loops, so we have to design the crawler carefully to avoid infinite loops 
+
+
+# Scraping Data from Tables
+
+## Extracting Data from Tables: Intro and Roadmap 
+- One important use case for web scraping is to **automatically extract and save data from tables**
+- When should I scrape a table?
+- Walk through example: national exam results from Tanzania 
+
+
+
+## When to Scrape? 
+- If your goal was just to scrape this particular table one time, copy-and-pasting is fine. 
+- You should webscrape if:
+    - Your tables are spread across multiple pages: [example with Tanzania (link)](https://maktaba.tetea.org/exam-results/CSEE2015/Olevel.htm)
+    - Data tables are using "lazy-loading", so you have to scroll over and over again to "Show More": [example with ESPN (link)](https://www.espn.com/nhl/stats/player)
+- Webscraping should be a tool of last resort! 
+    - If there is an API, use it
+    - If there is a portal to download data, use it
+
+
+## Example: A Scrapable Table
+
+- Example: Tanzania National Examination outcomes ([link](https://maktaba.tetea.org/exam-results/FTNA2015/S0101.htm))
+
+![](pictures/tanzania_1.png){ width=80% fig-align="center"}
+
+- As of Sep 2024, ChatGPT could not write code to scrape this page (but maybe by the time we give this lecture maybe it will be able to...)
+<!-- https://chatgpt.com/share/dd6fb13c-d744-4803-8f60-bba6d9dd8164 --> 
+
+
+## Example: A Scrapable Table
+
+- Example: Tanzania National Examination outcomes ([link](https://maktaba.tetea.org/exam-results/FTNA2015/S0101.htm))
+
+![](pictures/tanzania_2.png){ width=80% fig-align="center"}
+
+- This table is stable and looks like it could be manually copy and pasted
+- This makes it a good candidate for scraping
+
+
+## Counterexample: Data Viewers
+- In contrast, would not recommend scraping dynamic tables/"data viewers"
+
+**Census** "Explore Census Data" ([link](https://data.census.gov/table/DECENNIALCD1182020.P1?q=Population%20Total))
+![](pictures/census_dataviewer.png){ width=70% fig-align="center"}
+
+**Kaiser Family Foundation** "State Health Facts" ([link](https://www.kff.org/affordable-care-act/state-indicator/total-marketplace-enrollment/?currentTimeframe=0&sortModel=%7B%22colId%22:%22Location%22,%22sort%22:%22asc%22%7D#notes))
+![](pictures/kff_dataviewer.png){ width=70% fig-align="center"}
+
+
+## Example: Data Viewers
+- In contrast, would not recommend scraping dynamic tables/"data viewers"
+- These are often rendered dynamically in JavaScript, rather than static HTML 
+- *(To scrape these more advanced websites, you could use the Selenium package, which allows you to control a web browser through Python)*
+
+\vspace{2ex}
+
+**Census** "Explore Census Data" ([link](https://data.census.gov/table/DECENNIALCD1182020.P1?q=Population%20Total))
+![](pictures/census_dataviewer.png){ width=70% fig-align="center"}
+
+<!-- **Kaiser Family Foundation** "State Health Facts" ([link](https://www.kff.org/affordable-care-act/state-indicator/total-marketplace-enrollment/?currentTimeframe=0&sortModel=%7B%22colId%22:%22Location%22,%22sort%22:%22asc%22%7D#notes))
+![](pictures/kff_dataviewer.png){ width=70% fig-align="center"} -->
+
+## Example: Scraping a Table
+
+- Let's try to scrape the table on this webpage
+![](pictures/tanzania_1.png){ width=100% fig-align="center"}
+
+## Example: Scraping a Table
+Recall that the steps of building a webscraper are:
+
+0. *Manual*: inspect website and HTML to see how the info we want to extract is structured
+1. *Code*: download and save HTML code associated with a URL 
+2. *Code*: parse through HTML code to extract information based on what we learned in Step 0 + refine
+3. *Code*: organize and clean extracted information outside of scraper (Pandas, string cleaning, etc)
+
+
+## **Exercise**
+1. Go to the Tanzania National Examination outcomes ([link](https://maktaba.tetea.org/exam-results/FTNA2015/S0101.htm))
+2. Familiarize with the web page and table -- **what is the unit of observation**? 
+3. From looking at the table, **name a detail** about the structure and layout of the table that you anticipate could make scraping difficult
+
+. . .
+
+4. Right click over one of the observations and "Inspect" it: **what tag(s) does the data appear to be stored in**?
+
+
+
+## Step 0. Inspect website and HTML
+:::: {.columns}
+
+::: {.column width="60%"}
+\vspace{2ex}
+- Given the issue with the header, we're going to start with the first row with a name
+- Search for the name in the first row: 'ABDALLAH'
+- Appears to be in a nested tag: `<table>` $\to$ `<tbody>` $\to$ `<tr>` $\to$ `<td>`
+- *\textcolor{red}{Note}: `<tbody>` is not in the actual HTML file, but is instead added by the browser you use to inspect*
+:::
+
+
+::: {.column width="40%"}
+![](pictures/tanzania_3.png){ width=100% fig-align="center"}
+:::
+
+::::
+
+
+
+## Step 1. Download and save HTML 
+- Start with the usual: making a request to website and parsing the response with `BeautifulSoup`
+
+```{python}
+#| echo : true
+url = 'https://maktaba.tetea.org/exam-results/FTNA2015/S0101.htm'
+response = requests.get(url)
+soup = BeautifulSoup(response.text, 'lxml')
+
+```
+
+
+
+## Step 2.  Extract + refine
+- Let's use `.find` to find the *first* instance of `table` tag
+- Then apply `.find_all` to see what's inside
+```{python}
+#| echo : true
+table = soup.find('table')
+tr = table.find_all('tr') #tr is table row
+tr[0:5]
+```
+
+## Step 2.  Extract + refine
+- The output from looking for the `tr` tag seems to align with the HTML code
+
+![](pictures/tanzania_4.png){ width=80% fig-align="center"}
+
+
+- But we don't want to scrape the first lines or the header 
+- At this point, we should loop through the items in `tr`
+
+## Step 2.  Extract + refine
+
+- After a bit of searching through the `tr` object, we will find that the first row starts in index `24`
+
+```{python}
+#| echo : true
+
+tr[24]
+```
+
+- We're almost at the data! 
+- But need to drill down one more level to each cell, which are denoted by `td`
+
+## Step 2.  Extract + refine
+- Apply `.find_all()` again to look for `td`
+```{python}
+#| echo : true
+td = tr[24].find_all('td')
+td[0:3]
+```
+
+. . .
+
+```{python}
+#| echo : true
+td[0].text
+```
+
+```{python}
+#| echo : true
+td[2].text
+```
+
+## Step 3. Organize and save extracted information 
+- To extract information, we need *two* nested for loops
+```{python}
+#| echo : true
+data_rows = []
+
+for row in table.find_all('tr')[24:]:               #1
+    td_tags = row.find_all('td')                    #2
+    data_rows.append([val.text for val in td_tags]) #3
+
+
+```
+
+. . .
+
+1. Loops through all `tr` tags in `table` (after the 24th row)
+2. Within each `tr` tag, finds all the `td` tags
+3. Loops through `td_tags` and appends text within to `data_rows`
+
+## Step 3. Organize and save extracted information 
+- `data_rows` is a list, so we need to convert it into a dataframe 
+```{python}
+#| echo : true
+data_rows = pd.DataFrame(data_rows)
+print(data_rows.head())
+```
+
+
+## Step 3. Organize and save extracted information 
+- We forgot the header! 
+- Can we scrape the header from the table? 
+![](pictures/tanzania_5.5.png){ width=80% fig-align="center"}
+
+. . .
+
+- Given that the header is spread out across several rows and is sometimes vertical, scraping it would be a hassle 
+
+## Fix Header 
+- Instead of scraping it, we'll just hard-code it: define the header manually 
+
+```{python}
+#| echo : true
+my_cols = ['CNO', 'Repeater', 'Name', 'Sex', 'Civics', 'History', 'Geography', 'Knowledge', 'EDK', 'Fine_Arts', 'Phys_Ed', 
+ 'Kiswahili', 'English', 'French', 'Physics', 'Chemistry', 'Biology', 'Info_Computer', 'Math', 'Commerice', 'Keeping', 'GPA', 'Class']
+
+data_rows.columns = my_cols
+```
+
+- There's a tradeoff with webscraping: if you are doing something *just once*, probably not worth it to do it via scraping 
+
+## Step 3. Organize and save extracted information 
+
+```{python}
+#| echo : true
+print(data_rows.head())
+```
+
+## Check Original Table Again
+![](pictures/tanzania_7.png){ width=80% fig-align="center"}
+
+- Looking back at the original table, it looks like it should say `'Absent'` for each grade and `'ABS'` for GPA and class
+- The rest of the data cleaning can be done by cleaning dataframes in `pandas`
+
+## Check Subset of Students Who were Absent 
+
+```{python}
+#| echo : true
+absent_subset = data_rows[data_rows['Repeater'] == "REPEATER"]
+print(absent_subset.head())
+```
+
+## Replace Grades of Absent Students
+
+```{python}
+#| echo : true
+data_rows.loc[data_rows['Repeater'] == "REPEATER", data_rows.columns[4:-2]] = "Absent"
+
+data_rows.loc[data_rows['Repeater'] == "REPEATER", data_rows.columns[-2:]] = "ABS"
+
+```
+
+## Check Subset of Students Who were Absent Again
+
+```{python}
+#| echo : true
+absent_subset = data_rows[data_rows['Repeater'] == "REPEATER"]
+print(absent_subset.head())
+```
+
+## Extracting Data from Tables: Summary 
+- BeautifulSoup can scrape HTML tables (but not dynamic JavaScript ones)
+- HTML tables should be easy to spot via `table` tag
+- Most of the work will be in
+    - step 2: scraping what you want from the table
+    - step 3: cleaning up the scrapers mistakes in Pandas
+- Tradeoff with scraping: it is costly to code up a scraper, so if you're only doing something once, don't necessarily have to scrape it
+
+# Can I Scrape It?
+## Can I Scrape It?: Roadmap
+- Discuss cases where websites block scraping + one solution
+- How to determine if a site is scrapable ahead of time
+
+
+
+## Websites Can Block Scraping: Examples
+- Many modern websites have built in mechanisms to prevent scraping
+
+```{python}
+#| echo : true
+#| eval: true
+
+url = "https://www.amazon.com/"
+response = requests.get(url)
+soup = BeautifulSoup(response.content, 'lxml')
+soup.text[0:100]
+```
+
+. . .
+
+```{python}
+#| echo : true
+#| eval: true
+
+url = "https://www.nytimes.com/2024/08/15/us/politics/us-to-announce-prices-for-first-drugs-picked-for-medicare-negotiations.html"
+response = requests.get(url)
+soup = BeautifulSoup(response.content, 'lxml')
+soup.text[0:100]
+```
+
+- In these cases, check if the data is accessible via an API
+
+## Websites Can Block Crawlers: Rate-Limiting
+- Websites can also block *crawling* by 'rate-limiting': track how often a bot accesses the site and block it if it access it too often
+- In this case, your request will return a `429 Too Many Requests` error
+- Can avoid this by adding a delay with `time.sleep()` in between iterations
+
+\vspace{2ex}
+
+```{python}
+#| echo : true
+#| eval: false 
+import time
+
+for url in urls:
+    response = requests.get(url)
+    time.sleep(2)  # Add a 2-second delay
+```
+
+
+## Can I Scrape It?
+1. Check Terms of Service
+
+![](pictures/linkedin_tos.png){ width=100% fig-align="center"}
+
+
+
+
+## Can I Scrape It?
+2. Check `robots.txt`
+![](pictures/linkedin_robots.png){ width=100% fig-align="center"}
+
+## Can I Scrape It?
+2. Check `robots.txt`
+
+![](pictures/wikipedia_robots.png){ width=80% fig-align="center"}
+
+
+## Can I Scrape It?: Summary 
+- Some sites block all scraping, others just rate-limit 
+- Check Terms of Service or `robots.txt` to see if a website allows scraping 
+
+## Webscraping: Summary
+- Webscraping downloads, parses, and extracts information from the HTML of webpage
+- Most of the work is in familiarizing yourself with the unique structure of the website you want to scrape and cleaning up afterwards
+- Webscraping tools can be adapted to 'crawl' the web by recursively extracting URLs
