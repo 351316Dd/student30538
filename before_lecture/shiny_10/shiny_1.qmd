@@ -1,0 +1,859 @@
+---
+title: "Dashboards + Shiny I (Lecture 10)"
+author: "Peter Ganong and Maggie Shi"
+date: today
+date-format: long
+format: 
+    beamer:
+        echo: true
+        aspectratio: 169
+        theme: default
+        toc: true
+        header-includes: |
+            \renewcommand{\tightlist}{\setlength{\itemsep}{5ex}\setlength{\parskip}{0pt}}
+            \setbeamertemplate{footline}[frame number]
+            \usepackage{fvextra}
+            \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+            \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,commandchars=\\\{\}}
+---
+
+# Introduction
+
+## From A Static Process
+![](pictures/process_1.pdf){ width=70% fig-align="center"}
+
+## To A Dynamic Process
+![](pictures/process_2.pdf){ width=70% fig-align="center"}
+
+## To A Dynamic Process
+![](pictures/process_3.pdf){ width=70% fig-align="center"}
+
+## To A Dynamic Process
+![](pictures/process_4.pdf){ width=70% fig-align="center"}
+
+## Dashboards 
+
+* When you analyze a dataset, your process looks a lot more like the dynamic one than the static one. Dashboards allow someone who does not code to do a limited version of the same process you go through.
+* There are two other major benefits of dashboards which we will not spend time on in class, but you should also know about 
+    * Consolidated information: aggregate data from various sources into one unified interface
+    * Real-time data metrics: dynamic view based on automatically-updated data feed 
+* *(Impressive: they are a great way to flex your data skills for your portfolio!)*
+
+
+## Dashboard Examples
+[Tipping Dashboard (link)](https://gallery.shinyapps.io/template-dashboard-tips1/?_gl=1*8eg1ly*_ga*NTIzNjY0NzA4LjE3MjA2MjE0MTU.*_ga_2C0WZ1JHG0*MTcyNDM1NzM4NC40LjEuMTcyNDM1NzQ3MS4wLjAuMA..)
+
+![](pictures/restaurant_tip.png){ width=70% fig-align="center"}
+
+
+
+## Dashboard Examples
+[NBA Dashboard (link)](https://gallery.shinyapps.io/template-nba-dashboard/?_gl=1*8eg1ly*_ga*NTIzNjY0NzA4LjE3MjA2MjE0MTU.*_ga_2C0WZ1JHG0*MTcyNDM1NzM4NC40LjEuMTcyNDM1NzQ3MS4wLjAuMA..)
+
+![](pictures/nba.png){ width=70% fig-align="center"}
+
+
+## Dashboards: Promises and Pitfall
+
+When Professor Ganong worked in the Mayor's Office in Boston, the mayor asked for every single department to suggest metrics for a dashboard. The mayor put a TV in his office so that the dashboards would be displayed at all times.
+
+Discussion questions: 
+
+1. What are examples of data that a city would benefit from tracking with a dashboard?
+2. What are examples of data where putting it on a dashboard might inadvertently lead to poor management or create bad incentives for workers?
+
+
+## Shiny
+- `shiny` is a framework for creating dashboards and web apps
+- Originally developed for R, but now available for Python
+- In Terminal/command line:
+
+```{}
+$ pip install shiny
+```
+
+In this lecture: `$` means run at the terminal (on Macs the prefix is `%`)
+
+## Introduction: summary
+
+* Dashboards let non-coders interact with data
+* There are many ways to build a dashboard, we will use shiny
+* If you haven't installed shiny yet, please install it now 
+
+
+# Anatomy of All Shiny Apps
+
+## Anatomy of All Shiny Apps: Roadmap 
+- Introduce vocabulary: User interface (UI) and Server
+- UI input elements
+- Server examples
+- UI output elements
+- Syntax for all shiny apps
+
+## Shiny Program Components
+
+Shiny programs have 2 main components 
+
+\vspace{2ex}
+
+1. **User interface (UI)** : defines the layout and elements users interact with
+    \vspace{2ex}
+    - UI side is basically the 'decorative' part of the Shiny program -- akin to web design
+2. **Server**: logic that processes inputs and outputs 
+    - Server side is where the Python code is
+
+
+- In this class, both the UI and the server run on a single computer -- yours. 
+- Note: Shiny apps can't be run directly out of VSCode or in code chunks. Instead, we will deploy from the command line, as we will see in a few slides
+
+## UI Examples: Input Elements
+![](pictures/input_1.png){ width=70% fig-align="center"}
+
+## UI Examples: Input Elements
+![](pictures/input_2.png){ width=60% fig-align="center"}
+
+
+## Server Examples
+
+* Read in a CSV file
+* Make a graph
+* Make a map
+* Compute statistics for a place/time period/subgroup of interest
+* Run a machine learning algorithm, report predictions in a table
+
+## UI Examples: Output Elements
+![](pictures/output_1.png){ width=55% fig-align="center"}
+
+
+## UI and Server
+![](pictures/process_5.pdf){ width=70% fig-align="center"}
+
+
+## Shiny App Syntax
+Shiny apps always have the following structure:
+
+:::: {.columns}
+
+::: {.column width="50%"}
+```{python}
+# | eval: false
+from shiny import App, render, ui
+
+app_ui = ui.page_fluid(
+    [CODE TO LAY OUT THE PAGE]
+)
+
+def server(input, output, session):
+    [CODE THAT HANDLES PYTHON]
+
+app = App(app_ui, server)
+```
+:::
+
+::: {.column width="50%"}
+- **UI**: `app_ui = ui.page_fluid(...)`
+
+\vspace{4ex}
+
+. . . 
+
+- **Server**: `def server(input, output, session):`
+
+
+\vspace{4ex}
+
+. . . 
+
+- **App**: always ends with `app = App(app_ui, server)`
+:::
+
+::::
+
+## Anatomy of All Shiny Apps: Summary
+
+- Shiny app is always composed of a **UI** side and  **server** side
+- UI side has elements that take in *input*: check boxes, numeric inputs, slider
+- Pass these inputs to the server, get back computation results
+- UI then displays *output*: text, figures, data
+
+
+# Build Your First Shiny App 
+## Your First Shiny App: Roadmap
+
+Steps
+
+1. Navigate through command line to the folder where the app will be stored 
+2. Create a basic app
+3. Deploy and display it in a web browser
+
+Plan of action: I will show this step-by-step and then you will try it.
+
+
+## Creating a New Shiny App 
+- We initialize Shiny apps from the command line -- not in Python 
+- This means our usual workflow of running code chunks out of VSCode won't work
+- Instead, we'll do the following:
+
+. . .
+
+\vspace{2ex}
+
+- First, decide which folder you want the Shiny app to be using the finder
+- Then navigate there using the command line. How-to's on next slide
+
+## 
+
+\small
+
+:::: {.columns}
+
+::: {.column width="50%"}
+**Macs**
+
+- Right click and hover over "Copy"
+
+![](pictures/directory_2.png){ width=40% fig-align="center"}
+
+
+- **Before** clicking "Copy", press "Option" key (⌥)
+- It should switch to "Copy [foldername] as Pathname"
+:::
+
+::: {.column width="50%"}
+**Windows**
+
+![](pictures/directory_2_pc.png){ width=100% fig-align="center"}
+
+"Copy as Path"
+
+Source: How-to Geek
+:::
+
+::::
+
+\vspace{2ex}
+
+![](pictures/directory_3.png){ width=80% fig-align="center"}
+
+```{}
+$ cd <dir_for_shiny_app> 
+```
+
+\normalsize
+
+
+## Create Your Shiny App
+Within that folder, type in Terminal:
+
+```{}
+$ shiny create
+```
+- If you're getting errors that `shiny` is not a recognized command, try `python -m shiny create` or `python -m shiny create`
+- Choose "Basic app" as the template
+    - In a future lecture we will explore the other templates
+
+\vspace{2ex}
+
+![](pictures/directory_4.png){ width=50% fig-align="center"}
+
+. . .
+
+- Don't use Shiny Express
+
+![](pictures/directory_5.png){ width=50% fig-align="center"}
+
+
+## Create Your Shiny App (continued)
+- Click "Enter" for destination category (since you've already `cd`-ed into that directory)
+
+![](pictures/directory_6.png){ width=50% fig-align="center"}
+
+. . .
+
+- You should see a new folder titled `basic-app` in your directory 
+
+![](pictures/directory_7.png){ width=65% fig-align="center"}
+
+
+## Your New Shiny App 
+
+\footnotesize
+
+Inside `basic-app`, you should see an `app.py` file
+
+```{python}
+#| eval: false
+from shiny import App, render, ui
+
+app_ui = ui.page_fluid(
+    ui.panel_title("Hello Shiny!"),
+    ui.input_slider("n", "N", 0, 100, 20),
+    ui.output_text_verbatim("txt"),
+)
+
+def server(input, output, session):
+    @render.text
+    def txt():
+        return f"n*2 is {input.n() * 2}"
+
+app = App(app_ui, server)
+```
+
+\normalsize
+
+
+## Deploying Your New Shiny App 
+
+- Shiny apps are deployed out of Terminal with the following line:
+
+```{}
+$ shiny run --reload basic-app/app.py
+```
+
+\vspace{2ex}
+![](pictures/directory_9.png){ width=60% fig-align="center"}
+
+
+- If the app doesn't automatically load, copy the IP address into your browser
+
+\vspace{2ex}
+![](pictures/directory_10.png){ width=60% fig-align="center"}
+
+## Deploying Your New Shiny App 
+- In your browser, you should see a basic app with a slider from 0 to 100
+\vspace{2ex}
+![](pictures/directory_11.png){ width=40% fig-align="center"}
+
+## In-class exercise
+
+Follow instructions on slides 26-32 to deploy `basic-app`
+
+```{}
+$ pip install shiny
+$ cd name-of-directory/
+$ shiny create
+# choose "Basic app", Shiny Express -> No, directory <accept_default> #
+$ shiny run basic-app/app.py
+```
+In browser, verify that you can move the slider. Quit in terminal using CTRL+C .
+
+\vspace{2ex}
+
+Tips:
+
+* If the app doesn’t automatically load, copy the URL into your browser. 
+
+
+
+\vspace{-1.5ex}
+- If you're getting errors that `shiny` is not a recognized command, try `python -m shiny run basic-app/app.py` or `python -m shiny run basic-app/app.py`
+
+\vspace{-1.5ex}
+
+* Default directory names may be something other than `basic-app`
+
+\vspace{-1.5ex}
+
+* When you are done, help a neighbor
+
+
+
+# Understand Your First Shiny App: UI
+
+## Understand Your First Shiny App: Roadmap
+:::: {.columns}
+
+::: {.column width="50%"}
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+# | eval: false
+# | echo: true 
+from shiny import App, render, ui
+
+app_ui = ui.page_fluid(
+    ui.panel_title("Hello Shiny!"),
+    ui.input_slider("n", "N", 0, 100, 20),
+    ui.output_text_verbatim("txt"),
+)
+
+def server(input, output, session):
+    @render.text
+    def txt():
+        return f"n*2 is {input.n() * 2}"
+
+app = App(app_ui, server)
+```
+:::
+
+::: {.column width="50%"}
+![](pictures/directory_11.png){ width=90% fig-align="center"}
+
+Walk through
+
+* `ui.panel_title()`
+
+\vspace{-1ex}
+
+* `ui.input_slider()`
+
+\vspace{-1ex}
+
+* `ui.output_text_verbatim()`
+
+:::
+
+
+::::
+
+## Going back to our basic app: `app.py` 
+:::: {.columns}
+
+::: {.column width="50%"}
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+# | eval: false
+# | echo: true 
+from shiny import App, render, ui
+
+app_ui = ui.page_fluid(
+    ui.panel_title("Hello Shiny!"),
+    ui.input_slider("n", "N", 0, 100, 20),
+    ui.output_text_verbatim("txt"),
+)
+
+def server(input, output, session):
+    @render.text
+    def txt():
+        return f"n*2 is {input.n() * 2}"
+
+app = App(app_ui, server)
+```
+:::
+
+::: {.column width="50%"}
+
+\begin{center} A UI-only component: title \end{center}
+
+
+```{python}
+# | eval: false
+# | echo: true 
+ui.panel_title("Hello Shiny!")
+```
+
+\vspace{2ex}
+
+- This remains static and doesn't require any computation
+- So it doesn't appear on the server side
+:::
+
+::::
+
+## Going back to our basic app: `app.py` 
+:::: {.columns}
+
+\footnotesize
+
+::: {.column width="50%"}
+```{python}
+# | eval: false
+# | echo: true 
+from shiny import App, render, ui
+
+app_ui = ui.page_fluid(
+    ui.panel_title("Hello Shiny!"),
+    ui.input_slider("n", "N", 0, 100, 20),
+    ui.output_text_verbatim("txt"),
+)
+
+def server(input, output, session):
+    @render.text
+    def txt():
+        return f"n*2 is {input.n() * 2}"
+
+app = App(app_ui, server)
+```
+:::
+
+::: {.column width="50%"}
+
+\begin{center} Component: **input** slider \end{center}
+
+
+```{python}
+#| eval: false
+#| echo: true 
+ui.input_slider("n", "N", 0, 100, 20)
+```
+
+. . .
+
+\vspace{2ex}
+
+\vspace{2ex}
+- `"n"`: value from user input
+- `"N"`: label 
+- `0`: minimum of slider
+- `100`: maximum of slider
+- `20`: default value of slider 
+- H[Link to sliderInput documentation](https://shiny.posit.co/r/reference/shiny/0.14/sliderinput)
+
+:::
+::::
+
+\normalsize
+
+
+## Going back to our basic app: `app.py` 
+:::: {.columns}
+
+::: {.column width="50%"}
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+# | eval: false
+# | echo: true 
+from shiny import App, render, ui
+
+app_ui = ui.page_fluid(
+    ui.panel_title("Hello Shiny!"),
+    ui.input_slider("n", "N", 0, 100, 20),
+    ui.output_text_verbatim("txt"),
+)
+
+def server(input, output, session):
+    @render.text
+    def txt():
+        return f"n*2 is {input.n() * 2}"
+
+app = App(app_ui, server)
+```
+:::
+
+::: {.column width="50%"}
+
+\footnotesize
+
+\begin{center}Component: **output** text verbatim \end{center}
+
+**UI**: 
+
+```{python}
+# | eval: false
+# | echo: true 
+ui.output_text_verbatim("txt")
+```
+
+- This component renders text 
+- What is `"txt"`?
+
+. . .
+
+\vspace{2ex}
+**Server**:
+```{python}
+# | eval: false
+# | echo: true 
+@render.text
+def txt():
+    return f"n*2 is {input.n() * 2}"
+```
+
+-  Shiny's syntax: `"txt"` on UI side corresponds to `txt()` on the server side
+\vspace{-1ex}
+- Additional syntax: `@render.text` indicates that `txt()` should be rendered as text
+
+:::
+::::
+
+
+
+\normalsize
+
+## Render Decorators
+
+- Any function whose output you want to display must be wrapped with a **render decorators** of the correct type 
+- The render decorator is always followed by the definition of a function (e.g., `def txt():`)
+
+\vspace{2ex}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{UI Side}     & \textbf{Server Side} \\ \hline
+`ui.output\_plot`      & `@render.plot` \\ \hline
+`ui.output\_text`, `ui.output\_text\_verbatim`      & `@render.text` \\ \hline
+`ui.output\_table`      & `@render.table` \\ \hline
+
+\end{tabular}
+\end{table}
+
+
+
+## Understand Your First Shiny App: Summary
+
+- UI: ask user for `ui.input_slider("n")` 
+- Server: receive input as as `input.n()`
+- Server: compute `input.n() * 2`
+- Server: get output from server as `def txt():`
+    - We have to declare what this output will be eventually rendered as using a decorator (`@render.text`) 
+- UI: display output as `ui.output_text_verbatim("txt")`
+
+## Generalizing from this Example:
+You can now see the general pattern:
+
+- *Syntax for defining input*: `"x"` on UI side becomes `input.x()` on server side
+
+\vspace{-1.5ex}
+
+- *Syntax for defining output*: `def value():` on server side becomes `"value"` on UI side
+\vspace{-1.5ex}
+
+- *Syntax for rendering output*: render decorators like `@render.plot`,  `@render.table`
+
+# Build Your Second Shiny App
+
+## Build Your Second Shiny App: Roadmap
+
+Goal: display a histogram of a normally-distributed sample with mean `mu`
+
+Steps
+
+1. Install package to show graphs in Altair
+1. Server side code to compute a normally-distributed sample with mean `mu`
+2. UI side code to ask for `mu` and to display the plot
+
+
+## Jupyter Widgets 
+- Shiny supports Jupyter Widgets via `shinywidgets` package
+    - About 10\% of students needed to instead use a different  `anywidget`
+- We'll focus on using `shinywidgets` to incorporate `altair` plots, but it also supports many other interactive widgets from Jupyter Notebooks: `plotly`, `pydeck`, `bokeh`, etc.
+
+```{}
+$ pip install shinywidgets
+```
+
+## Altair Jupyter Widget
+- **UI-side**: `shinywidgets` has its own UI output element: `output_widget()`
+- **Server-side**: Altair has its own render function through `shinywidgets`: `@render_altair` 
+
+- First, import required packages
+
+```{python}
+from shinywidgets import render_altair, output_widget
+import altair as alt
+```
+
+
+## Build Your Second Shiny App 
+- Starting on server side of `normal_distn_app/app.py`:
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+# | eval: false
+# | echo: true 
+def server(input, output, session):
+    # [other server-side code]
+    @render_altair
+    def my_hist():
+        sample = np.random.normal(input.mu(), 20, 100)
+        df = pd.DataFrame({'sample': sample})
+        return(
+            alt.Chart(df).mark_bar().encode(
+                alt.X('sample:Q', bin=True), 
+                alt.Y("count()")
+            )
+        )
+```
+
+<!--
+- `sample = np.random.normal(input.n(), 20, 100)` is `numpy` code that defines a normally-distributed random sample:
+    - mean: `input.n()`
+    - standard deviation: `20`
+    - number of observations: `100`
+--> 
+
+## Build Your Second Shiny App 
+- Then moving on to the UI side:
+
+. . .
+
+\vspace{2ex}
+
+- We have defined plot as `my_hist()` on the server side
+- But on the UI side, we have to call it `"my_hist"`
+
+. . . 
+
+\vspace{2ex}
+```{python}
+# | eval: false
+# | echo: true 
+app_ui = ui.page_fluid(
+    ui.panel_title("Histogram of 100 Draws from Normal with mean mu"),
+    ui.input_slider("mu", "N", 0, 100, 20),
+    output_widget("my_hist")
+)
+```
+
+
+## Build Your Second Shiny App 
+- One last thing: add libraries at the top 
+
+```{python}
+# | eval: false
+# | echo: true 
+from shiny import App, render, ui
+from shinywidgets import render_altair, output_widget
+import altair as alt
+import numpy as np
+```
+
+## Build Your Second Shiny App 
+
+`$ shiny run --reload normal_distn_app/app.py`
+
+![](pictures/basic_app_2.png){ width=40% fig-align="center"}
+
+This app is stored in the folder `shiny_10/apps_after_class`
+
+## Build Your Second Shiny App: Summary
+
+- Ask user for `ui.input_slider("mu")` 
+
+\vspace{-1.5ex}
+
+- Give input to server as `input.mu()`
+
+\vspace{-1.5ex}
+
+- Simulate numbers drawn from a distribution with mean `mu`
+
+\vspace{-1.5ex}
+
+- Define output using as `def my_hist():`
+    - Render decorator for altair output: `@render_altair`
+
+\vspace{-1.5ex}
+
+- Display output as `output_widget("my_hist")`
+
+<!-- Remark: this is very similar to what the original basic app did with `ui.input_slider("n")` -> `input.n()` -> `def txt()` -> `ui.output_text_verbatim("txt")` -->
+
+# Debugging 
+
+## Debugging: Roadmap
+- We will now introduce some typos to show how they manifest
+- Mis-typed the plot color
+- Mis-typed a Shiny function
+- Used wrong `render`
+
+## Example 1
+
+\vspace{2ex}
+- Say that we mis-typed the plot color
+
+```{python}
+#| eval: false
+@render_altair
+def my_hist():
+    sample = np.random.normal(input.n(), 20, 100)
+    df = pd.DataFrame({'sample': sample})
+    return (
+        alt.Chart(df)
+        .mark_bar(color = not_a_color)
+        .encode(x=alt.X('sample:Q', bin=True), y="count()")
+    )
+```
+
+## Example 1, continued 
+- Once we save `app.py`, the app will refresh and display:
+
+![](pictures/basic_app_error1.png){ width=50% fig-align="center"}
+
+- And we will also get a similar error in terminal
+
+![](pictures/basic_app_error2.png){ width=60% fig-align="center"}
+
+## Example 2
+- But say that we mis-typed one of the UI elements: `output_wdget()`
+
+```{python}
+# | eval: false
+# | echo: true
+
+app_ui = ui.page_fluid(
+    ui.panel_title("Histogram of 100 Draws from Normal with mean mu"),
+    ui.input_slider("mu", "N", 0, 100, 20),
+    output_wdget("my_hist")
+)
+```
+
+- The app won't load at all and the error message is in Terminal
+
+![](pictures/basic_app_error3.png){ width=70% fig-align="center"}
+
+## Example 3
+
+\vspace{2ex}
+- Say that we used `@render.text` instead of `@render_altair`
+
+```{python}
+#| eval: false
+
+@render.text
+def my_hist():
+        sample = np.random.normal(input.mu(), 20, 100)
+        df = pd.DataFrame({'sample': sample})
+        return(
+            alt.Chart(df).mark_bar().encode(
+                alt.X('sample:Q', bin=True), 
+                alt.Y("count()")
+            )
+        )
+```
+
+## Example 3, continued
+
+![](pictures/basic_app_error5.png){ width=70% fig-align="center"}
+
+
+
+## In-Class Exercise
+
+Try to run `apps_for_class/normal_distn_app/app_to_debug.py`. Debug the errors.
+
+## Debugging: Summary
+
+- Plain vanilla python errors (`wrongcolor`) will typically show up in the web app.
+- Shiny-specific errors (`output_wdget`) will show up in Terminal
+- Output definition on server side needs to also include "render decorator" functions: `@render_altair`, `@render.text`, etc.
+- Develop your app piece-by-piece and keep refreshing the app to debug as you go
+
+
+## Whole Lecture Summary
+Dashboards are a way to give (limited) Python access to your non-coding friends, managers, or the public
+
+Steps to a dashboard in Shiny
+
+\vspace{-1ex}
+
+1. UI takes user input 
+
+\vspace{-1ex}
+
+2. Send it to the server 
+
+\vspace{-1ex}
+
+3. Run Python on the server 
+\vspace{-1ex}
+
+4. Write a Python function which returns material to display 
+\vspace{-1ex}
+
+5. Display it in the UI 
+
+\vspace{-1ex}
+
+Debugging is trickier with apps, since errors can be at command line or in the app itself
+
