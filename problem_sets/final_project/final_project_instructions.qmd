@@ -48,7 +48,8 @@ The code for the project should have the following components:
 * The top of your writeup should include the names of all group members, their respective sections, and Github user names.
 
 ## Presentation (15%)
-* On the day of the presentation, one of the group members will be *randomly selected* to give a *8-minute in-class presentation*. All group members must present.
+* On the day of the presentation, one of the group members will be *randomly selected* to give a *8-minute in-class presentation*. All group members must be present.
+* Any group member who is not present will receive an automatic 0 for the presentation portion of the final project.
 * The presentation will be of slides that largely mirror the structure of the writeup, but will be more focused on discussing the research question and results as opposed to explaining the details of the coding. 
 
 # Final Repository

@@ -1,0 +1,269 @@
+---
+title: "Problem Set 6 - Waze Shiny Dashboard"
+author: "Peter Ganong, Maggie Shi, and Andre Oviedo"
+date: today
+format: 
+  pdf:
+    include-in-header: 
+       text: |
+         \usepackage{fvextra}
+         \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+include-before-body:
+  text: |
+    \RecustomVerbatimEnvironment{verbatim}{Verbatim}{
+      showspaces = false,
+      showtabs = false,
+      breaksymbolleft={},
+      breaklines
+    }
+---
+1. **ps6:** Due Sat 23rd at 5:00PM Central. Worth 100 points (80 points from questions, 10 points for correct submission and 10 points for code style) + 10 extra credit. 
+
+We use (`*`) to indicate a problem that we think might be time consuming. 
+
+# Steps to submit (10 points on PS6) {-}
+
+1. "This submission is my work alone and complies with the 30538 integrity
+policy." Add your initials to indicate your agreement: \*\*\_\_\*\*
+2. "I have uploaded the names of anyone I worked with on the problem set **[here](https://docs.google.com/forms/d/185usrCREQaUbvAXpWhChkjghdGgmAZXA3lPWpXLLsts/edit)**"  \*\*\_\_\*\* (2 point)
+3. Late coins used this pset: \*\*\_\_\*\* Late coins left after submission: \*\*\_\_\*\*
+
+4. Before starting the problem set, make sure to read and agree to the terms of data usage for the Waze data [here](https://canvas.uchicago.edu/courses/59054/quizzes/130617).
+
+5. Knit your `ps6.qmd` as a pdf document and name it `ps6.pdf`.
+6. Push your `ps6.qmd`, `ps6.pdf`, `requirements.txt`, and all created folders (we will create three Shiny apps so you will have at least three additional folders) to your Github repo (5 points). It is fine to use Github Desktop.
+7. Submit `ps6.pdf` and also link your Github repo via Gradescope (5 points)
+8. Tag your submission in Gradescope. For the Code Style part (10 points) please tag the whole correspondingsection for the code style rubric.
+
+*Notes: see the [Quarto documentation (link)](https://quarto.org/docs/authoring/figures.html) for directions on inserting images into your knitted document.*
+
+*IMPORTANT: For the App portion of the PS, in case you can not arrive to the expected functional dashboard we will need to take a look at your `app.py` file. You can use the following code chunk template to "import" and print the content of that file. Please, don't forget to also tag the corresponding code chunk as part of your submission!*
+
+```{python}
+#| echo: true
+#| eval: false
+
+def print_file_contents(file_path):
+    """Print contents of a file."""
+    try:
+        with open(file_path, 'r') as f:
+            content = f.read()
+            print("```python")
+            print(content)
+            print("```")
+    except FileNotFoundError:
+        print("```python")
+        print(f"Error: File '{file_path}' not found")
+        print("```")
+    except Exception as e:
+        print("```python") 
+        print(f"Error reading file: {e}")
+        print("```")
+
+print_file_contents("./top_alerts_map_byhour/app.py") # Change accordingly
+```
+
+```{python} 
+#| echo: false
+
+# Import required packages.
+import pandas as pd
+import altair as alt 
+import pandas as pd
+from datetime import date
+import numpy as np
+alt.data_transformers.disable_max_rows() 
+
+import json
+```
+
+# Background {-}
+
+## Data Download and Exploration (20 points){-} 
+
+1. 
+
+```{python}
+
+```
+
+2. 
+
+```{python}
+
+```
+
+3. 
+
+```{python}
+
+```
+
+4. 
+
+1. 
+```{python}
+
+```
+
+2. 
+
+```{python}
+
+```
+
+3. 
+
+```{python}
+
+```
+
+4. 
+
+```{python}
+
+```
+
+
+# App #1: Top Location by Alert Type Dashboard (30 points){-}
+
+1. 
+
+a. 
+```{python}
+
+```
+
+b. 
+```{python}
+
+```
+
+
+c. 
+```{python}
+
+```
+
+d. 
+```{python}
+
+```
+
+3. 
+    
+a. 
+
+```{python}
+
+```
+    
+
+b. 
+```{python}
+# MODIFY ACCORDINGLY
+file_path = "./top_alerts_map/chicago-boundaries.geojson"
+#----
+
+with open(file_path) as f:
+    chicago_geojson = json.load(f)
+
+geo_data = alt.Data(values=chicago_geojson["features"])
+
+```
+
+4. 
+
+```{python}
+
+```
+
+5. 
+
+a. 
+
+```{python}
+
+```
+
+b. 
+```{python}
+
+```
+
+c. 
+```{python}
+
+```
+
+d. 
+```{python}
+
+```
+
+e. 
+
+# App #2: Top Location by Alert Type and Hour Dashboard (20 points) {-}
+
+1. 
+
+a. 
+
+
+    
+b. 
+```{python}
+
+```
+
+c.
+
+```{python}
+
+```
+    
+
+2.
+
+a. 
+
+
+
+b. 
+
+
+c. 
+
+
+# App #3: Top Location by Alert Type and Hour Dashboard (20 points){-}
+
+1. 
+
+
+a. 
+
+b. 
+
+```{python}
+
+```
+
+2. 
+
+a. 
+
+
+b. 
+    
+3. 
+
+a. 
+    
+
+b. 
+
+
+c. 
+
+
+d.

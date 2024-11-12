@@ -298,6 +298,7 @@ Source: https://spatialanalysisonline.com/HTML/centroids_and_centers.htm -->
 data["centroid"] = data.centroid
 data.set_geometry("centroid")
 data[['tract', 'centroid', 'geometry']].head()
+data.area
 ```
 \normalsize
 

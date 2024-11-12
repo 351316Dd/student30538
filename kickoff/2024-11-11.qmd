@@ -1,0 +1,26 @@
+---
+title: "Kickoff"
+author: "Peter Ganong and Maggie Shi"
+date: today
+format: beamer   
+execute:
+  eval: true
+  echo: true
+---
+
+## Final Project Presentations Sign Up
+
+- Everything I'm about to say, plus more details will be in a Canvas announcement Wednesday
+- Using Canvas to schedule final presentation slots
+- **Friday 9 am** slots will open for **one** of the group members sign up on behalf of the entire group
+- **All** group members must attend the entire class that they signed up for
+- Any group member who is not present will receive 0 for the presentation
+- In case you need to reschedule and all slots are taken, we will release a Google Spreadsheet so students can contact each other to switch slots
+
+
+## Problem Set 6
+- Solo problem set
+- Released yesterday, due in *2* weeks 
+- After today, you should be able to do up to App 1 #4 (data exploration, creating a graph outside of Shiny first)
+- By end of next lecture, you should be able to do up to App 3 #3
+
