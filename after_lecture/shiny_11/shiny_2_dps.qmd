@@ -1,0 +1,55 @@
+
+---
+title: " Shiny II (Reactive Programming, Lecture 11)"
+author: "Peter Ganong and Maggie Shi"
+date: today
+date-format: long
+format: 
+    beamer:
+        echo: true
+        eval: false
+        aspectratio: 169
+        theme: default
+        toc: true
+        header-includes: \renewcommand{\tightlist}{\setlength{\itemsep}{5ex}\setlength{\parskip}{0pt}}
+            \setbeamertemplate{footline}[frame number]
+            \usepackage{fvextra}
+            \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+            \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,commandchars=\\\{\}}
+---
+
+## Do-pair-share: solution
+Starting on the **UI-side**, add radio buttons
+```{python}
+app_ui = ui.page_fluid(
+    ui.input_select(...),
+    ui.input_radio_buttons(id = 'outcome', label = 'Choose an outcome:', choices = ["Cases", "Deaths"])ly , #new code
+    ui.output_plot('ts'),
+    ui.output_table("subsetted_data_table")
+)
+
+```
+
+## Do-pair-share: solution
+Then on **server-side**: 
+\AddToHookNext{env/Highlighting/begin}{\small}
+```{python}
+ @render.plot
+def ts():
+    df = subsetted_data()
+    if input.outcome() == "Cases": #begin new code
+        series = df['cases']       #
+    if input.outcome() == "Deaths":#
+        series = df['deaths']      # end new code
+    fig, ax = plt.subplots(figsize=(3,6))
+    ax.plot(df['date'], series)
+    ax.tick_params(axis = 'x', rotation = 45)
+    ax.set_xlabel('Date')
+    ax.set_ylabel(input.outcome())
+    ax.set_title(f'COVID-19 {input.outcome()} in {input.state()}')
+    ax.set_yticklabels(['{:,}'.format(int(x)) for x in ax.get_yticks()])
+    return fig
+```
+
+## Do-pair-share: solution
+![](pictures/covidapp_8.png){ width=60% fig-align="center"}

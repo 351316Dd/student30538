@@ -1,0 +1,581 @@
+---
+title: " Shiny II (Reactive Programming, Lecture 11)"
+author: "Peter Ganong and Maggie Shi"
+date: today
+date-format: long
+format: 
+    beamer:
+        echo: true
+        eval: false
+        aspectratio: 169
+        theme: default
+        toc: true
+        header-includes:
+            \setbeamertemplate{footline}[frame number]
+            \usepackage{fvextra}
+            \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+            \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,commandchars=\\\{\}}
+---
+
+# First Reactive Example
+
+## Reactive Functions: Roadmap
+- Define reactive functions
+- Add a new `my_sumstats()` function to the `normal_distn_app` app from last class
+- Seems deceptively easy, but requires debugging
+- Solution to our bug will be a reactive function
+- Discuss other use cases for reactive functions
+
+## Reactive Functions definition
+- A "Reactive" function is one that keeps track of **dependencies** (e.g., `input`) and will only re-run a piece of code when it detects one of its dependencies has changed
+- This minimizes unnecessary computations by only updating outputs that are affected by dependency changes
+- Ordering of reactive functions doesn't matter; instead they just track their dependencies
+    - In fact: ordering of all functions in `server()` doesn't matter. Shiny figures out for you when to run them.
+ 
+## Reactive Functions: Normal Distribution Example
+- To see the usefulness of reactive functions, let's go back to our example from last class:  
+
+![](pictures/basic_app.png){ width=50% fig-align="center"}
+
+- App from last class shared in `student30538/before_lecture/shiny_11/apps_for_class/normal_distn_app/` 
+
+## Tech Interlude
+
+Professor Ganong wasn't able to get Altair plots to render alongside `ui.output_text_verbatim`. `Matplotlib` using `@render.plot` works just fine. We're not sure if this is a bug that other people will have, but since the point of this lecture is to learn shiny, not to learn plots, we've reverted the dashboards in this lecture to use `Matplotlib`.  
+
+## Reactive Functions: Normal Distribution Example
+- Say we want to add some summary statistics to the bottom 
+- Recall what the **server side** currently looks like:
+
+\AddToHookNext{env/Highlighting/begin}{\small}
+```{python}
+def server(input, output, session):
+    @render.plot
+    def my_hist():
+        sample = np.random.normal(input.n(), 20, 200)
+        fig, ax = plt.subplots()
+        ax.hist(sample, bins=30, color='blue', alpha=0.7)
+        return fig
+```
+
+## Reactive Functions: Normal Distribution Example
+- Add in text with minimum, median, and maximum below the graph to the server: 
+```{python}
+    @render.text
+    def my_sumstats():
+        sample = np.random.normal(input.n(), 20, 100)
+        min = np.min(sample)
+        max = np.max(sample)
+        median = np.median(sample)
+        return "Min:" + str(min) + ", Median: " + str(median), ", Max: " + str(max)
+```
+
+- Question: are we done, or do we need to add something to the UI-side?
+    - (Hint: we need to add to the UI-side whenever we add a feature that users will see)
+
+. . .
+
+- Answer: Nope -- still have to add to the **UI side** to display them!
+
+## Reactive Functions: Normal Distribution Example
+- Add `ui.output_text_verbatim()` to the UI side
+- We reference `my_sumstats()` as `"my_sumstats`" on the UI side
+
+```{python}
+app_ui = ui.page_fluid(
+    ui.panel_title("Histogram of 200 Draws from Normal with mean mu"),
+    ui.input_slider("mu", "mean mu", 0, 100, 20), 
+    ui.output_plot("my_hist"),
+    ui.output_text_verbatim("my_sumstats")
+)
+```
+
+
+
+## In-class exercise
+Goal: Update the app using the code above
+
+1. navigate using terminal to app folder: `student30538/before_lecture/shiny_11/apps_for_class/normal_distn_app/`
+2. In VSCode, modify `app.py` with the material from the prior slides in lecture
+    * add the extra line in `app_ui` 
+    * add the new function `my_sumstats()`
+3. In terminal, `shiny run --reload app.py`
+
+
+## Reactive Functions: Normal Distribution Example
+- Your updated app should look like the following
+- But with a different histogram + summary stats, because it was a random sample
+![](pictures/basic_app_error1.png){ width=60% fig-align="center"}
+
+
+## Reactive Functions: Normal Distribution Example
+- But wait!
+![](pictures/basic_app_error2.png){ width=70% fig-align="center"}
+
+
+## Reactive Functions: Normal Distribution Example
+- Issue: `sample` is drawn twice: in `my_hist()` and again in `my_sumstats()`
+\AddToHookNext{env/Highlighting/begin}{\small}
+```{python}
+@render.plot
+def my_hist():
+    sample = np.random.normal(input.n(), 20, 100)
+    fig, ax = plt.subplots()
+    ax.hist(sample, bins=30, color='blue', alpha=0.7)
+    return fig
+
+@render.text
+def my_sumstats():
+    sample = np.random.normal(input.n(), 20, 100)
+    min = np.min(sample)
+    max = np.max(sample)
+    median = np.median(sample)
+    return "Min:" + str(min) + ", Median: " + str(median), ", Max: " +str(max)
+```
+
+
+## Reactive Functions: Normal Distribution Example
+- Recall that `my_sumstats()` is a **function** -- so it won't recognize `sample` if it is defined in another function, `my_hist()`
+- Typically we would define `sample` outside of the function, and then feed it into `my_sumstats()` as an input
+
+- In Shiny, we do this by making a `sample` into a **reactive function**
+
+. . .
+
+- First, add to the top:
+
+```{python}
+from shiny import App, render, ui, reactive
+```
+
+## Reactive Functions: Normal Distribution Example
+- On the **server side**: define a new reactive function called `sample()` 
+- `@reactive.calc` decorator: used for functions whose return value depends on inputs or other reactive values
+
+\AddToHookNext{env/Highlighting/begin}{\small}
+
+```{python}
+
+@reactive.calc
+def sample():
+    return(np.random.normal(input.n(), 20, 100))
+```
+
+- This function is "*reactive*"" because it will only run (i.e., react) if its dependency, `input.n()`, changes
+
+## Reactive Functions: Normal Distribution Example
+- Then in `my_hist()` and `my_sumstats()`, replace every prior instance of `sample` with `sample()`
+- And remove any prior code that defines `sample`
+\AddToHookNext{env/Highlighting/begin}{\small}
+```{python}
+@render.plot
+def my_hist():
+    fig, ax = plt.subplots()
+    ax.hist(sample(), bins=30, color='blue', alpha=0.7)
+    return fig
+
+@render.text
+def my_sumstats():
+    min = np.min(sample())
+    max = np.max(sample())
+    median = np.median(sample())
+    return "Min:" + str(min) + ", Median: " + str(median), ", Max: " +str(max)
+```
+
+## Reactive Functions: Normal Distribution Example
+- Question: do we need to go back to UI side and change anything?
+    - (Hint: we need to add to the UI-side whenever we add a feature that users will see)
+. . .
+
+- Answer: no, because we didn't change anything about what the app displays
+    - It is still displaying a plot and summary stats
+
+## Reactive Functions: Normal Distribution Example
+- Run it again, and now the summary statistics are correct!
+![](pictures/basic_app_corrected.png){ width=60% fig-align="center"}
+
+<!--
+## Types of Reactive Functions 
+
+
+- `@reactive.calc`: returns a calculation based on reactive dependencies then reuse that calculation in multiple places
+- `@reactive.effect`: performs a 'side effect' in response to changes in reactive dependencies, *without returning anything* 
+- `@reactive.event`: rather than re-executing a function automatically whenever *any* reactive dependency changes, restrict re-execution to only changes in one or more dependencies 
+
+ MS TO PG: 
+- Example for reactive.effect: drop-down list for subcategory depends on what is chosen for the main category
+- Example for reactive.event: you have a computationally intensive simulation that takes some user-inputted value. You can make a reactive.event that requires the user to input a value and then push a button before the simulation starts (otherwise it would automatically start as soon as the value is inputted) 
+ Basically, any time the Python code has to run again in response to a change in user selection, you need a reactive function to detect that the input changed and to run all the subsequent code. YoU are right, though, that the last case doesn't necessarily have to involve a reactive function. The conditonal panel example in shiny_3.qmd doesn't use reactive functions and is done entirely on the UI-side.
+ -->
+
+## Reactive Functions: Other Use Cases
+
+So far we have seen `@reactive.calc`. Next lecture, we will also cover `@reactive.effect` and `@reactive.event`. Here are all the things that you ultimately can do using reactive functions
+
+- **Data importing**: import and store data from an external source 
+- **Reduce run-time**: re-run function *only* when one of the inputs changes
+- **Dynamic data filtering**: filter/subset data based on user input 
+- **Conditional UI**: change or hide specific UI elements (e.g., input fields, dropdown menu values) based on user input *(next class)*
+
+## Reactive Functions vs. Render Function
+- Typical function: 
+```{python}
+@render.plot
+def my_hist():
+    sample = np.random.normal(input.n(), 20, 100)
+    fig, ax = plt.subplots()
+    ax.hist(sample, bins=30, color='blue', alpha=0.7)
+    return fig
+```
+- Use a *render* decorator when the output is something you want to display on the UI-side
+- Here, `@render.plot` tells Shiny that you want `my_hist()` to be rendered as output
+
+## Reactive Functions: Summary 
+- **Reactive functions** are functions that run when one of their dependencies change
+    - Ensure values/objects are consistent across different parts of your code on server side
+    - Minimize redundant and unnecessary re-calculations
+- This section used a toy example where it is easy for the computer to re-calculate everything. In the next section, we will turn to a more realistic example.
+
+# Case Study: COVID-19 Dashboard I
+
+## COVID Data Example: End Goal
+
+:::: {.columns}
+
+::: {.column width="30%"}
+
+- Code for app: `apps_for_class/covid`
+- Starting with external data on COVID cases and deaths by state, create an app that has:
+
+1. Drop-down list of states 
+
+
+
+2. Preview of data of user-selected state
+
+
+
+3. Time series plot of COVID cases and deaths in selected state (next section)
+
+
+
+:::
+
+::: {.column width="70%"}
+![](pictures/covidapp_7.png){ width=90% fig-align="center"}
+:::
+
+::::
+
+
+## COVID Data Example: Roadmap
+
+1. Familiarize ourselves with the data
+2. Create skeleton `app.py`
+3. Input state as a dropdown list
+4. Import data using a reactive calculation
+5. Filter to selected state  with another reactive calculation
+6. Display selected state data
+7. Add a timeseries plot (next section)
+
+## COVID Data Example: Data
+- Before we work on the app, let's familiarize ourselves with the data: `nyt_covid19_data.csv` (outside of a shiny app)
+
+
+
+```{python}
+#| eval: true
+#| echo: false
+import pandas as pd
+```
+
+```{python}
+#| eval: false
+
+df = pd.read_csv("apps_for_class/covid/nyt_covid19_data.csv") 
+print(df.head())
+print("First date: " + str(df['date'].min()))
+print("Last date: " + str(df['date'].max()))
+```
+
+. . .
+
+```{python}
+#| eval: true
+#| echo: false
+df = pd.read_csv("apps_for_class/covid/nyt_covid19_data.csv") 
+print(df.head())
+print("First date: " + str(df['date'].min()))
+print("Last date: " + str(df['date'].max()))
+```
+
+## Step 1: Set up basic app structure 
+- Your basic app structure (UI + server + call to app) will always be the same
+- In `covid/app.py`:
+
+```{python}
+from shiny import App, render, ui, reactive
+
+app_ui = ui.page_fluid(
+    # ui code
+)
+def server(input, output, session):
+    # server code
+
+app = App(app_ui, server)
+```
+
+
+## Step 2: Drop-down list 
+- We want to create a drop-down list with every state name
+- Documentation for dropdown menu UI [(link)](https://shiny.posit.co/py/api/core/ui.input_select.html)
+
+![](pictures/dropdown.png){ width=70% fig-align="center"}
+
+## Step 2: Drop-down list 
+- Starting on the **UI side**:
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+from shiny import App, render, ui, reactive
+
+app_ui = ui.page_fluid(
+    ui.input_select(id = 'state', label = 'Choose a state:',
+    choices = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"])
+)
+```
+
+- Hard-coding every state name is not ideal. Next lecture, we'll discuss how to pre-populate this list.
+
+
+## Step 3: Import data 
+- Next, we will import the data on the **server side** as a reactive function 
+
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+def server(input, output, session):
+    @reactive.calc
+    def full_data():
+        return pd.read_csv("nyt_covid19_data.csv", parse_dates = ['date'])
+
+app = App(app_ui, server)
+```
+
+- Now that we've stored this in a reactive function, we can reuse `full_data()` 
+
+## Step 4: Filter to selected state 
+
+- Question: given how we've defined the dropdown menu on the **UI-side** (below), do you remember how we reference `"state"` **server-side**?
+
+
+```{python}
+app_ui = ui.page_fluid(
+    ui.input_select(id = 'state', label = 'Choose a state:',
+    choices = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware"... )
+)
+
+```
+. . .
+
+- Answer: on the server side, we reference it using `input.state()`
+
+
+
+
+## Step 4: Filter to selected state 
+
+- On the **server-side**, add a `@reactive.calc` function that returns the subsetted dataframe:
+\AddToHookNext{env/Highlighting/begin}{\small}
+```{python}
+def server(input, output, session):
+    @reactive.calc      
+    def full_data():
+        return pd.read_csv("nyt_covid19_data.csv", parse_dates = ['date'])
+
+    @reactive.calc  #new function, reacts to input.state()
+    def subsetted_data():
+        df = full_data()
+        return df[df['state'] == input.state()]
+```
+
+## Step 5: Display selected state data 
+- Then again on server-side, add a render function to make a table that we want to display (`@render.table`)
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+def server(input, output, session):
+    @reactive.calc
+    def full_data():
+        return pd.read_csv("nyt_covid19_data.csv", parse_dates = ['date'])
+
+    @reactive.calc
+    def subsetted_data():
+        df = full_data()
+        return df[df['state'] == input.state()]
+    
+    @render.table
+    def subsetted_data_table():
+        return subsetted_data()
+```
+
+- `subsetted_data()`: **reactive** function that subsets and returns a dataframe
+
+\vspace{-1.5ex}
+- `subsetted_data_table()`: **render** function that prepares the data for UI
+
+## Step 5: Display selected state data 
+- Back to the **UI-side**, add a UI element for the table of the subsetted data
+\AddToHookNext{env/Highlighting/begin}{\small}
+```{python}
+app_ui = ui.page_fluid(
+    ui.input_select(id = 'state', label = 'Choose a state:',
+    choices = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware"...),
+    ui.output_table("subsetted_data_table")
+)
+```
+
+## Run the app again 
+
+In Terminal: `shiny run --reload app.py`
+
+\vspace{2ex}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+Without any user selection, the app will default to the first state
+
+![](pictures/covidapp_2.png){ width=80% fig-align="center"}
+:::
+
+::: {.column width="50%"}
+But will dynamically update once the user chooses a state
+
+\vspace{2.5ex}
+
+![](pictures/covidapp_3.png){ width=80% fig-align="center"}
+:::
+
+::::
+
+
+## COVID Data Example: Summary
+- Read in all the data (`full_data()`) and limit to one state(`subsetted_data()`)
+- Tips on developing your apps
+    - Develop your apps piece-by-piece, moving from UI side to server side
+    - **If the feature adds something new that the user sees**: you will have to make changes on the UI side
+
+# Case Study: COVID-19 Dashboard II
+
+## Add a time series plot: roadmap
+
+- Now we want to add a timeseries plot to the dashboard
+
+## Step 6: Add a time series plot 
+- **Server side**: 
+\AddToHookNext{env/Highlighting/begin}{\small}
+```{python}
+def server(input, output, session):
+   # [other server components]
+   @render.plot
+   def ts():
+        df = subsetted_data_table()
+        fig, ax = plt.subplots(figsize=(6,6))
+        ax.plot(df['date'], df['cases'])
+        return fig
+```
+
+. . .
+
+- Then on the **UI-side**: 
+\AddToHookNext{env/Highlighting/begin}{\small}
+```{python}
+app_ui = ui.page_fluid(
+    # [other UI components],
+    ui.output_plot('ts')
+)
+```
+
+## Try running it...
+![](pictures/covidapp_4.png){ width=60% fig-align="center"}
+
+. . .
+
+- Oops! 
+
+- This error message isn't very informative...let's try looking at the terminal output
+
+. . .
+
+![](pictures/covidapp_5.png){ width=80% fig-align="center"}
+
+- Question: look at how we defined `subsetted_data_table()` on slide 34. Can you figure out what the issue is here? 
+
+## Debugging
+
+- Answer: `subsetted_data_table()` is designed to display the data on the dashboard (**render**) 
+- Instead, we want the output of the **reactive** function `subsetted_data()`
+
+. . .
+
+\AddToHookNext{env/Highlighting/begin}{\small}
+```{python}
+def server(input, output, session):
+   # [other server components]
+   @render.plot
+   def ts():
+        df = subsetted_data()
+        fig, ax = plt.subplots(figsize=(6,6))
+        ax.plot(df['date'], df['cases'])
+        return fig
+```
+
+## COVID Data Example
+- Now when we save and it re-runs, we get what we wanted
+
+![](pictures/covidapp_6.png){ width=50% fig-align="center"}
+
+## Improving our Plot
+```{python}
+def server(input, output, session):
+   # [other server components]
+   @render.plot
+   def ts():
+        df = subsetted_data()
+        fig, ax = plt.subplots(figsize=(6,6))
+        ax.plot(df['date'], df['cases'])
+        ax.tick_params(axis = 'x', rotation = 45)
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Cases')
+        ax.set_title(f'COVID-19 cases in {input.st()}')
+        ax.set_yticklabels(['{:, .0f}'.format(x) for x in ax.get_yticks()])
+        return fig
+```
+
+## COVID Data Example
+
+![](pictures/covidapp_7.png){ width=60% fig-align="center"}
+
+
+## COVID Data Example: Summary
+* We wrote a new server side function `ts()`
+* We added `ui.output_plot('ts')`
+* Bug: we referenced a `render` function when we meant to reference a `reactive` one
+    * Useful message only available at terminal
+* Use reactive decorated functions to load data (not render decorated functions)
+
+## Do-pair-share: adding to the app
+
+
+- Go to the app shared in: `student30538/before_lecture/shiny_11/apps_for_class/covid/app.py` 
+
+- We want to add in one more piece to the app: **radio buttons** that allow user to choose if they want to display cases or deaths
+
+![](pictures/radiobuttons.png){ width=40% fig-align="center"}
+
+- start by adding radio buttons on the UI side
+- move to the harder step of modifying the function `ts()` to choose which variable to display based on radio input 
+
+## Whole Lecture Summary
+- We've covered a core component of dashboards: **reactive programming**
+- Reactive functions track of dependencies and will only re-run a piece of code when it detects one of its dependencies has changed
+- This allows the dashboard to react and dynamically update based on user input
+- Application: app that dynamically filters and plots COVID data based on user-selected state

@@ -1,0 +1,54 @@
+---
+title: "Kickoff + Problem Set 5 Debrief"
+author: "Professors + Your Wonderful and Hardworking TAs"
+date: today
+date-format: long
+format: 
+    beamer:
+        echo: true
+        toc: false
+        aspectratio: 169
+        theme: default
+        header-includes: \renewcommand{\tightlist}{\setlength{\itemsep}{5ex}\setlength{\parskip}{0pt}}
+            \setbeamertemplate{footline}[frame number] 
+---
+
+# Kickoff
+
+## Final 
+* The final will be an 80 minute 40 questions, mostly multiple choice style. It will be a closed-book exam administered through Canvas or another electronic options. 
+* Questions will be mostly based on the lectures, similar to what you have seen in the weekly quizzes. They will also cover ideas which have been taught in the problem set solutions and the mini lessons.
+
+## End of quarter
+* Grade computation: "Problem sets 1 and 3 will be worth half of problem sets 2, 4, 5, and 6. We will drop the lowest problem set grade such that your total problem set score is maximized."
+    * Example: If you get four 100s, a 50 on a pset worth half (PS1 or PS3) and a 51 on another pset, we will drop the 51.
+* We would like to get your feedback on the course. Live feedback can provide additional useful color beyond what is in written evaluations. Professor Ganong is going to host a feedback session (with lunch from Plein Air) on Tuesday December 17 at 12:30. Sign up **[here](https://docs.google.com/spreadsheets/d/1LBVec0wjcUKp1ve1XPaqqY3E1aQoTAAUIqt6iQ-VB8Q/edit?gid=0#gid=0)**. If we are oversubscribed we will lottery or add additional sessions.
+
+# PS5 Debrief
+
+## Style
+- Need to keep in mind code style principles such as docstrings for functions, informative name of variables, commenting steps in the code and being aware of lines of code being too long
+
+
+## Step 2: Making the scraper dynamic
+- The purpose of the pseudo-code exercise is to think analytically on each step that you will have to perform when writing your code
+- Several answers did not outline the necessary steps, such as:
+    - including pause/wait (sleep) before fetching next page
+    - mentioning which type of loop would be used
+    - checking if the date is valid while in the loop
+    - stating what the function would return
+- Some answers simply put the code (not the pseudo code). Did not give credit for this.
+
+## Step 2: Making the scraper dynamic
+
+- For 2.3, when asked to test partner's code, many students are pasting the entire code provided by their partner, rather than simply calling the function for the designated year. In future assignments, please ensure that you only reference the function by name rather than copying the entire code block.
+
+## Step 3: Plot data based on scraped data (using altair)
+- Make sure your graph has all the required categories, legend and/or labels, and follows the prompt instructions (in this case, plot a choropleth)
+- String matching -- this was awesome to see because there were lots of different (all successful) methods of doing this
+
+## Step 4: Create maps of enforcement activity
+- Remember that part of plotting information per state is to plot the whole US map first, and then layer the plot of information per state on top of it
+- Be mindful of the color palette you choose: make sure it is appropriate for the data and the message you want to convey. Given that the lower bound of the plotted data is 0, does it make sense to use a color palette that starts with a color that is not white?
+- Beware when plotting non-continental states such as Hawaii, it could make the plot not focus on the other states
+- Also, be mindful of the size of your plot legend: it should not be too big or too small compared to the rest of the plot.
