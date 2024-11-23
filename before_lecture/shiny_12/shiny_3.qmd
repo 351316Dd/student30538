@@ -1,0 +1,956 @@
+---
+title: " Shiny III (User Interface, Lecture 12)"
+author: "Peter Ganong and Maggie Shi"
+date: today
+date-format: long
+format: 
+    beamer:
+        eval: false
+        echo: true
+        aspectratio: 169
+        theme: default
+        toc: true
+        header-includes:
+            \setbeamertemplate{footline}[frame number]
+            \usepackage{fvextra}
+            \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+            \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,commandchars=\\\{\}}
+---
+
+```{python}
+#| echo: false
+#| eval: true
+import pandas as pd
+```
+
+## Recap and Motivation
+- Up to now, we've covered much of the basics to get your Shiny app to work: UI + server structure, render decorators, reactive functions 
+- One of the main benefits of a dashboard is that it can show off the analysis in an aesthetically-pleasing, user-friendly way!
+- Today, we'll focus more on the **form** as opposed to the **function** of your app
+
+# Conditional UI 
+## Conditional Panels: Intro
+- Shiny dashboards can quickly become cluttered and inundate the user with TMI
+- One way to reduce clutter and simplify the UI is to give the user the option to show or hide certain panels
+- We can do so using **conditional panels**: wrapper around other UI functions that only display if some condition is true
+
+## Conditional Panels: Roadmap
+
+
+- Example 1: add a basic conditional panel to our basic COVID app
+- Introduce **Javascript conditions**, which are used to define conditions under which a panel appears
+- Example 2: add a more complicated conditional panel to our COVID app using Javascript conditions
+
+
+
+## COVID App from Last Class
+- Let's return to the result of the do-pair-share from last class in the folder: `apps_for_class/covid_plus` 
+- Recall that this app:
+    - Reads in national COVID data
+    - Subsets to a state
+    - Allows user to choose outcome: Cases or Deaths 
+    - Plots time series and displays data table
+
+
+## COVID App from Last Class
+![](pictures/covidapp_lasttime.png){ width=50% fig-align="center"}
+
+
+
+## Conditional Panels 
+- Displaying the data table makes the app a bit messy, and perhaps only some users are interested in seeing the raw data
+- We can clean this up by giving users the option to show or not show the data with a check box
+- Full code for app: `apps_for_class/covid-conditional-basic/`
+- All of the changes will be on the **UI-side**
+
+
+## Preview the end goal for Example 1
+
+`$ cd <your_details>/apps_for_class/`
+
+`$ shiny run covid-conditional-basic/app.py`
+
+Note: we get some warnings related to `set_ticklabels()`. Ignore these.
+
+## Example 1: Basic Conditional Panel
+\vspace{2ex}
+
+- We will need 2 new UI elements
+\vspace{2ex}
+
+1. Check-box with option to "Show Data" or not 
+2. Panel with the data table that only shows up *if* "Show Data" is checked
+
+## Example 1: Adding a Check Box
+- Documentation for check box [(link)](https://shiny.posit.co/py/api/core/ui.input_checkbox.html#shiny.ui.input_checkbox):
+![](pictures/checkbox.png){ width=60% fig-align="center"}
+
+. . .
+
+- On **UI-side**, we will add: 
+```{python}
+ui.input_checkbox(id = "show", label = "Show Data", value = FALSE)
+```
+-  `id` parameter is `"show"`, which will store a boolean (i.e., `TRUE/FALSE` logical value), depending on whether it is checked or not 
+- `value` parameter is `FALSE`, which is what will be stored in `"show"` when the app is initially loaded
+- Syntax: to reference `"show"` again on the *UI-side*, we have to call it `input.show` -- note the *lack* of parentheses
+
+
+## Example 1: Adding a Conditional Panel 
+- Now we can move on to adding our conditional panel
+- Syntax for conditional panel is:
+\AddToHookNext{env/Highlighting/begin}{\small}
+```{python}
+ui.panel_conditional(
+    [condition to display panel], 
+    [what you want to display if condition is true]
+)
+```
+
+- So for our example, it would be:
+\AddToHookNext{env/Highlighting/begin}{\small}
+```{python}
+ui.panel_conditional(
+        "input.show",
+        ui.output_table("subsetted_data_table")
+),
+```
+
+
+## Example 1: Conditional Panel: Result
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+![](pictures/covidapp_nocheck.png){ width=100% fig-align="center"}
+
+:::
+
+::: {.column width="50%"}
+![](pictures/covidapp_withcheck.png){ width=100% fig-align="center"}
+:::
+
+::::
+
+
+## Javascript Conditions
+- Say we want to use more complicated conditions rather than just whether a single input was true or false
+- We can operationalize this using **Javascript conditions**
+- The syntax is different from Python, but it follows the same logic 
+
+\vspace{2ex}
+- And: e.g., `input.show1 && input.show2`
+- Or: e.g., `input.condition_to_show1 || input.condition_to_show2`
+- Not: e.g., `!input.my_condition`
+- Check if a list (e.g., of selected choices) is non-zero: `input.myselectedvalues.length > 0`
+
+
+
+## Example 2: A More Complicated Conditional Panel
+
+Preview the end state `$ shiny run covid-conditional-advanced/app.py`
+
+- Say that on the server-side we have:
+    - A `render.plot` called `ts` that plots a time series of one state
+    - Another `render.plot` called `ts2` that plots two states at a time
+
+- We want to develop the parallel **UI-side** 
+
+Let's map the conditions at the whiteboard
+
+1. Has a switch that toggles between showing 1 or 2 states in time series
+2. If user chooses to show one state: plot `ts` and asks if they want to show data
+3. If a user chooses to show another state and wants to show data: plot `ts` and show `subsetted_data_table` 
+4. If user chooses to show two states: let user choose the second state and plot the `ts2` for both states.
+
+
+## Example 2: add a toggle switch
+- [Toggle switch documentation (link)](https://shiny.posit.co/py/api/core/ui.input_switch.html)
+
+![](pictures/toggle_switch_documentation.png){ width=80% fig-align="center"}
+
+```{python}
+    ui.input_switch("anotherstate", "Two States", False)
+```
+
+. . .
+
+- Question: if I want to reference the resulting True/False value of the switch, what would I call it?
+
+<!-- ZZZ: answer is input.anotherstate -->
+
+
+## Example 2: first conditional panel
+- First conditional panel: if user chooses to show one state: plot time series for one state
+ 
+\AddToHookNext{env/Highlighting/begin}{\small}
+```{python}
+   ui.panel_conditional(
+        "!input.anotherstate",
+        ui.output_plot("ts"),
+        ui.input_checkbox("show", "Show Data")
+    )
+```
+
+
+## Example 2: second conditional panel
+- Second conditional panel: if user chooses to show one state *and* wants to show data table
+ 
+\AddToHookNext{env/Highlighting/begin}{\small}
+```{python}
+    ui.panel_conditional(
+         "!input.anotherstate && input.show",
+         ui.output_table("subsetted_data_table")
+    ),
+```
+
+ 
+
+## Example 2: third conditional panel
+- Third conditional panel: if user chooses to show another state, let user choose the second state and plot the `ts2` for both states.
+\AddToHookNext{env/Highlighting/begin}{\small}
+```{python}
+    ui.panel_conditional(                       
+        "input.anotherstate",                             
+        ui.input_select(id = 'state2', label = 'Choose a state:',
+        choices = ["Alabama", "Alaska", "Arizona", "Arkansas",...]),
+        ui.output_plot("ts2")
+    )
+```
+
+
+## Example 2: putting it all together
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+app_ui = ui.page_fluid(
+    ui.input_select(id = 'state', label = 'Choose a state:',
+    choices = ["Alabama", "Alaska", "Arizona", "Arkansas" ...]),
+    ui.input_switch("anotherstate", "Two States", False),
+    ui.input_radio_buttons(id = 'outcome', label = 'Choose an outcome:', choices = ["Cases", "Deaths"]),
+    ui.panel_conditional(
+        "!input.anotherstate",
+        ui.output_plot("ts"),
+        ui.input_checkbox("show", "Show Data")),
+    ui.panel_conditional(
+         "!input.anotherstate && input.show",
+         ui.output_table("subsetted_data_table")),
+    ui.panel_conditional(
+        "input.anotherstate", 
+        ui.input_select(id = 'state2', label = 'Choose a state:',
+        choices = ["Alabama", "Alaska", "Arizona", "Arkansas" ...]),
+        ui.output_plot("ts2"))
+)
+```
+
+<!-- ZZZ lines to point out: ui.input_switch() and all 3 ui.panel_conditional() -->
+
+## Example 2: Result
+
+
+:::: {.columns}
+
+::: {.column width="50%"}
+![](pictures/covidapp_twostates_off.png){ width=100% fig-align="center"}
+:::
+
+::: {.column width="50%"}
+
+![](pictures/covidapp_twostates_on.png){ width=100% fig-align="center"}
+:::
+
+::::
+
+## Conditional UI: Summary
+- We can use conditional panels to allow users to "turn on and off" 
+- Syntax for defining conditional panel:
+```{python}
+ui.panel_conditional(
+    [condition to display panel], 
+    [what you want to display if condition is true]
+)
+```
+- To define a condition:
+    - Referencing user input stored as `"name_of_ui_value"`: `input.name_of_ui_value`
+    - More complicated conditions involve Javascript conditions
+
+# Dynamic UI: COVID Example
+
+## Dynamic UI: Intro and Roadmap
+\vspace{2ex}
+* Recap hard-coding of state list is generated in Shiny
+* Define dynamic UI
+* Introduce `@reactive.effect` and defining functions with no name
+* Show how this can be used to avoid hard-coding the state list 
+
+## Dynamic UI: Recap status quo
+
+\vspace{2ex}
+- Recall how we've been defining the state selection list in our apps (e.g., see `covid-conditional-basic` or `covid-conditional-advanced`)
+- **UI-side** looks like:
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+    ui.input_select(id = 'state', label = 'Choose a state:',
+    choices = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"])
+```
+- Generally we want to avoid hard coding:
+    - sensitive to typos
+    - not robust to large choice sets
+    - *(makes your code ugly!)*
+
+## Dynamic UI: Auto-generate state list
+- Instead of hard coding, we'd like to generate the state list based on the data
+    - Read in the data
+    - Get list of unique states and sort
+    - And use this list as the choices instead of `["Alabama", "Alaska", "Arizona", "Arkansas", "California",...`
+- Importantly, want this to happen automatically (i.e., without requiring the user to input anything)
+
+
+Discussion questions: 
+
+1. Prior examples: which side "acts" first: UI or server? 
+2. How will it need to differ here?
+
+## Dynamic UI: Reactive effects
+- Because generating the state list requires some `pandas` calculations, we will first add to the **server-side**:
+- Syntax for a reactive effect is the following:
+
+```{python}
+@reactive.effect
+def _():
+    # code for the whatever we want to take place automatically
+```
+
+- Functions decorated with `@reactive.effect` don't have a name. No one calls them and they don't wait to be called. They just wait in the shadows.  They execute if one of their dependencies change.
+
+## Dynamic UI: Reactive effect to auto-generate state list
+\footnotesize
+
+:::: {.columns}
+
+::: {.column width="60%"}
+
+\AddToHookNext{env/Highlighting/begin}{\tiny}
+```{python}
+app_ui = ui.page_fluid(
+    ui.input_select(             #1
+        id = 'state', 
+        label = 'Choose a state:', 
+        choices = []             #2
+    )
+    ...
+)
+
+def server(input, output, session):
+    @reactive.effect
+    def _():
+        states = full_data()['state']         #4
+        state_list = unique(states).tolist()  #5
+        state_list = sorted(state_list)       #6
+        ui.update_select("state", choices=state_list)               #7
+```
+
+
+:::
+
+::: {.column width="40%"}
+- Lines #4-6 generate a sorted list of unique state names called `state_list`
+- Line #7 updates the UI element for `"state"`
+- Line #1: where `"state"` UI element is defined 
+- Line #2: the default for `"state"` is that there is no initial choice set: `choices = []`
+
+. . .
+
+- Since `full_data()` is read *immediately*, the `@reactive.effect` also runs *immediately*. So the choices are filled in (almost) immediately, and we should never see the blank choice set from line #2
+:::
+
+::::
+
+\normalsize
+
+## Updating UI from server side
+- Every UI element has an equivalent "update" method which can be used from the **server-side**
+- `ui.update_select()` updates `ui.input_select()`
+- Other examples: `ui.update_checkbox()`, `ui.update_switch()`, `ui.update_radio_buttons()`, `ui.update_numeric()`, etc.
+
+<!-- optional demo: first deploy `apps_for_class/covid_plus` (the old app) and then this new one `apps_for_class/covid-update-select` to show that there are no differences across the two-->
+
+## Comparing this reactive effect to previous examples
+
+
+:::: {.columns}
+
+::: {.column width="50%"}
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+def server(input, output, session):
+    @reactive.calc
+    def subsetted_data():
+        df = full_data()
+        return df[df['state'] == input.state()]
+```
+
+- From last lecture
+- Runs when `subsetted_data()` is called or `full_data()` is updated. 
+
+:::
+
+::: {.column width="50%"}
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+def server(input, output, session):
+    @reactive.effect
+    def _():
+        states = full_data()['state']
+        ...
+```
+
+- From this lecture
+- Does not need to be called 
+- Runs when `full_data()` is updated (basically immediately)
+
+:::
+
+::::
+
+## Dynamic UI: Summary
+* `@reactive.effect` + `def _():` creates a reactive element that runs automatically
+* All UI elements have an equivalent "update" method that can be used on the *server* side
+
+
+# UI Layout: Basic Dashboard
+
+
+## Customizing UI: Intro
+- Shiny offers a multitude of ways to change the look and feel of your UI 
+- All controlled on the **UI-side**: doesn't include writing more Python
+
+<!--PG to MS what does it mean to say "no Python"? The code is written in a .py file, it just uses specific methods defined by Shiny
+UPDATE: I think the idea that we want to convey is something like
+There is a shiny syntax which works with R, Python, and web-based tools. Is that what you were thikning? If so, I think we should put this in lecture 1 rather than here. 
+- [ ] Clarify ideas that (a) ui is not Python. Same syntax for R or web-based. And (b) every single python function under server needs a decorator
+
+MS to PG: yes, that is it. The shiny syntax for the UI-side (and for parts of the server-side) is not really "Python".
+-->
+- Shiny comes pre-loaded with some basic templates
+- When building your app, can be useful to start from these as a "skeleton" as opposed to coding directly from scratch 
+
+## UI Layout Basic Dashboard: Roadmap
+
+* sidebar
+* columns layout
+* cards
+* icons
+
+## Back to Lecture 1
+- Going back to our first Shiny lecture: `cd` to your desired directory, then `$ shiny create`
+
+![](pictures/directory.png){ width=40% fig-align="center"}
+
+- This time, navigate down (using arrow keys) to "Basic dashboard"
+
+- Say no to Shiny Express
+
+- Give your folder a name: `basic-dash`
+
+- You may need to `$ pip install faicons` and `$ pip install seaborn` 
+
+- Deploy: `$ shiny run --reload basic-dash/app.py`
+
+## Basic Dashboard
+![](pictures/basic-dash-1.png){ width=70% fig-align="center"}
+
+
+
+## Basic Dashboard: Collapsible Sidebar 
+![](pictures/basic-dash-2.png){ width=70% fig-align="center"}
+
+
+## Basic Dashboard: Collapsible Sidebar 
+
+:::: {.columns}
+
+::: {.column width="60%"}
+\AddToHookNext{env/Highlighting/begin}{\tiny}
+```{python}
+app_ui = ui.page_sidebar(
+    ui.sidebar(
+        ui.input_slider("mass", "Mass", 2000, 6000, 6000),
+        ui.input_checkbox_group(
+            "species",
+            "Species",
+            ["Adelie", "Gentoo", "Chinstrap"],
+            selected=["Adelie", "Gentoo", "Chinstrap"],
+        ),
+        title="Filter controls",
+    ),
+    # rest of UI code 
+)
+```
+
+:::
+
+::: {.column width="50%"}
+- `ui.page_sidebar()` wraps around *all* content in the page, even what is not in the sidebar
+- `ui.sidebar()` wraps around content in the sidebar 
+- `title="Filter controls"` is a parameter for `ui.sidebar()`
+- Within `ui.sidebar()`, other two components are stacked in the order they appear in code
+:::
+
+::::
+
+## Basic Dashboard: Columns
+![](pictures/basic-dash-3.png){ width=70% fig-align="center"}
+
+
+## Basic Dashboard: Columns
+
+:::: {.columns}
+
+::: {.column width="60%"}
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+ui.layout_columns(
+    ui.card(
+        ui.card_header("Bill length and depth"),
+        ui.output_plot("length_depth"),
+        full_screen=True,
+    ),
+    ui.card(
+        ui.card_header("Penguin data"),
+        ui.output_data_frame("summary_statistics"),     
+        full_screen=True,
+    ),
+),
+```
+
+:::
+
+::: {.column width="50%"}
+- `ui.layout_columns`: responsive, column-based grid layout
+- Underpinned by a 12-column grid 
+- If no widths are defined (like in this example), will make each component equally-spaced -- each takes up 6 columns
+- `ui.card`s are a general-purpose container for grouping related UI elements 
+:::
+
+::::
+
+
+## Basic Dashboard: Columns
+
+:::: {.columns}
+
+::: {.column width="50%"}
+\AddToHookNext{env/Highlighting/begin}{\tiny}
+```{python}
+ui.layout_columns(
+    ui.card(
+        ui.card_header("Bill length and depth"),
+        ui.output_plot("length_depth"),
+        full_screen=True,
+    ),
+    ui.card(
+        ui.card_header("Penguin data"),
+        ui.output_data_frame("summary_statistics"),
+        full_screen=True,
+    ),
+    col_widths=(3, 9)
+),
+```
+
+:::
+
+::: {.column width="50%"}
+- Alternatively, setting `col_widths = (3,9)` gives 3 columns to plot, 9 to the data
+
+![](pictures/basic-dash-4.png){ width=100% fig-align="center"}
+:::
+
+::::
+
+<!-- ## Basic Dashboard: Columns
+
+:::: {.columns}
+
+::: {.column width="50%"}
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+ui.layout_columns(
+    ui.card(
+        ui.card_header("Bill length and depth"),
+        ui.output_plot("length_depth"),
+        full_screen=True,
+    ),
+    ui.card(
+        ui.card_header("Penguin data"),
+        ui.output_data_frame("summary_statistics"),
+        full_screen=True,
+    ),
+    ui.card(
+        ui.card_header("Another card"),
+        "This is another card",
+        full_screen=True,
+    ),
+    col_widths=(3, 9, 12)
+),
+```
+
+:::
+
+::: {.column width="50%"}
+- `col_widths(3,9,12)` would define a new row after 12 columns
+- Since first 2 components take up 12 columns, next one goes to next row
+
+\vspace{2ex}
+
+![](pictures/basic-dash-5.png){ width=100% fig-align="center"}
+:::
+
+:::: -->
+
+## Basic Dashboard: Cards
+
+:::: {.columns}
+
+::: {.column width="50%"}
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+ui.card(
+    ui.card_header("Bill length and depth"),
+    ui.output_plot("length_depth"),
+    full_screen=True,
+    )
+```
+
+
+
+:::
+
+::: {.column width="50%"}
+
+- `full_screen = True`: gives user option to expand card to full-screen if they hover over it 
+
+:::
+
+::::
+
+## Basic Dashboard: Fullscreen
+
+:::: {.columns}
+
+::: {.column width="40%"}
+
+
+![](pictures/fullscreen-1.png){ width=100% fig-align="center"}
+
+
+:::
+
+::: {.column width="60%"}
+
+![](pictures/fullscreen-2.png){ width=100% fig-align="center"}
+
+
+:::
+
+::::
+
+
+<!-- 
+## Basic Dashboard: Cards
+
+:::: {.columns}
+
+::: {.column width="50%"}
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+ui.card(
+    ui.card_header("Bill length and depth"),
+    ui.output_plot("length_depth"),
+    full_screen=True,
+    )
+```
+
+
+:::
+
+::: {.column width="50%"}
+
+
+\vspace{2ex}
+
+![](pictures/basic-dash-6.png){ width=100% fig-align="center"}
+
+- Other options: `fill` allows card to grow/shrink within a container
+
+\vspace{-1ex}
+- Card title/footer: `ui.card_header` and `ui.card_footer`
+:::
+
+:::: 
+
+
+
+## Basic Dashboard: Column Wrap
+![](pictures/basic-dash-7.png){ width=70% fig-align="center"}
+
+## Basic Dashboard: Column Wrap
+
+:::: {.columns}
+
+::: {.column width="60%"}
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+ui.layout_column_wrap(
+    ui.value_box(
+        "Number of penguins",
+        ui.output_text("count"),
+        showcase=icon_svg("earlybirds"),
+    ),
+    ui.value_box(
+        "Average bill length",
+        ui.output_text("bill_length"),
+        showcase=icon_svg("ruler-horizontal"),
+    ),
+    ui.value_box(
+        "Average bill depth",
+        ui.output_text("bill_depth"),
+        showcase=icon_svg("ruler-vertical"),
+    ),
+    fill=False,
+),
+```
+
+:::
+
+::: {.column width="50%"}
+- `ui.layout_column_wrap()`: grid-like layout where each component has same height and width
+- Since we have 3 components, it will create 3 equally-spaced columns
+- `ui.value_box`: card to display a value and title 
+- Icons are from "Font-Awesome" `from faicons import icon_svg` ([link to search](https://fontawesome.com/icons))
+:::
+
+::::
+--> 
+
+## UI Layout Basic Dashboard: Summary
+- Shiny has basic templates that you can automatically load
+- Ways to organize your UI:
+    - `ui.page_sidebar()`: collapsible sidebar
+    - `ui.layout_columns()`: 12-column grid
+    - `ui.card()`: all-purpose container
+
+
+# UI Layout: Multi-page
+
+## UI Layout Multi-page: Roadmap
+
+* Walk through built-in multi-page dashboard example 
+* Demonstrate nesting of UI elements
+
+## Multi-Page Example
+- Now let's look at the multi-page dashboard example
+![](pictures/directory2.png){ width=40% fig-align="center"}
+
+![](pictures/multi-page-1.png){ width=70% fig-align="center"}
+
+<!-- ZZZ things to point out on this graphic:
+- page 1 and page 2
+- within page 1: plot and table 
+
+If you load this app live, can click the various pages -->
+
+## Multi-Page Example
+
+![](pictures/multi-page-5.png){ width=90% fig-align="center"}
+<!-- ZZZ this is what you would see if you clicked "table." Notice that the "Select Variable" dropdown menu is still there! -->
+
+## Multi-Page Example: Structure
+
+:::: {.columns}
+
+::: {.column width="60%"}
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+page1 = ui.navset_card_underline(
+    ui.nav_panel("Plot", ui.output_plot("hist")),
+    ui.nav_panel("Table", ui.output_data_frame("data")),
+    footer=ui.input_select(
+        id = "var", 
+        label = "Select variable", 
+        choices = ["bill_length_mm", "body_mass_g"]
+    ),
+    title="Penguins data",
+)
+
+app_ui = ui.page_navbar(
+    ui.nav_spacer(),  
+    ui.nav_panel("Page 1", page1),
+    ui.nav_panel("Page 2", "This is the second 'page'."),
+    title="Shiny navigation components",
+)
+```
+
+:::
+
+::: {.column width="50%"}
+- First thing to note: `page1` is defined *outside* of `app_ui`
+- It is then referenced within `app_ui`: `ui.nav_panel("Page 1", page1)`
+- You can do this to make the code within `app_ui` easier to read
+
+:::
+
+::::
+
+
+## Multi-Page Example: Structure
+
+:::: {.columns}
+
+::: {.column width="60%"}
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+page1 = ui.navset_card_underline(
+    ui.nav_panel("Plot", ui.output_plot("hist")),
+    ui.nav_panel("Table", ui.output_data_frame("data")),
+   footer=ui.input_select(
+        id = "var", 
+        label = "Select variable", 
+        choices = ["bill_length_mm", "body_mass_g"]
+    ),
+    title="Penguins data",
+)
+
+app_ui = ui.page_navbar(
+    ui.nav_spacer(),  
+    ui.nav_panel("Page 1", page1),
+    ui.nav_panel("Page 2", "This is the second 'page'."),
+    title="Shiny navigation components",
+)
+```
+
+:::
+
+::: {.column width="50%"}
+![](pictures/multi-page-2.png){ width=90% fig-align="center"}
+
+- `ui.page_navbar` wraps around *all* content to define the page 
+- `ui.page_navbar` defines `"Page 1"` and `"Page 2"`
+:::
+
+::::
+
+
+
+## Multi-Page Example: Structure
+
+:::: {.columns}
+
+::: {.column width="60%"}
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+page1 = ui.navset_card_underline(
+    ui.nav_panel("Plot", ui.output_plot("hist")),
+    ui.nav_panel("Table", ui.output_data_frame("data")),
+    footer=ui.input_select(
+        id = "var", 
+        label = "Select variable", 
+        choices = ["bill_length_mm", "body_mass_g"]
+    ),
+    title="Penguins data",
+)
+
+app_ui = ui.page_navbar(
+    ui.nav_spacer(),  
+    ui.nav_panel("Page 1", page1),
+    ui.nav_panel("Page 2", "This is the second 'page'."),
+    title="Shiny navigation components",
+)
+```
+
+:::
+
+::: {.column width="50%"}
+![](pictures/multi-page-4.png){ width=90% fig-align="center"}
+
+- Within `page1`, there is another set of `ui.nav_panel` to switch between `"Plot"` and `"Table"`
+:::
+
+::::
+
+## Multi-Page Example: Structure
+
+:::: {.columns}
+
+::: {.column width="60%"}
+\AddToHookNext{env/Highlighting/begin}{\footnotesize}
+```{python}
+page1 = ui.navset_card_underline(
+    ui.nav_panel("Plot", ui.output_plot("hist")),
+    ui.nav_panel("Table", ui.output_data_frame("data")),
+    footer=ui.input_select(
+        id = "var", 
+        label = "Select variable", 
+        choices = ["bill_length_mm", "body_mass_g"]
+    ),
+    title="Penguins data",
+)
+
+app_ui = ui.page_navbar(
+    ui.nav_spacer(),  
+    ui.nav_panel("Page 1", page1),
+    ui.nav_panel("Page 2", "This is the second 'page'."),
+    title="Shiny navigation components",
+)
+```
+
+:::
+
+::: {.column width="50%"}
+![](pictures/multi-page-5.png){ width=90% fig-align="center"}
+
+- The drop-down menu to select a variable is defined in the *footer* of `page1`
+- So it remains in place when you switch from `"Plot"` to `"Table"`
+:::
+
+::::
+
+
+## Multi-Page Example
+- `ui.page_navbar` is a page container
+- `navset_card_underline()` is a pre-defined navigation/tab panel layout 
+- Some other common layouts [(link to Shiny Layouts)](https://shiny.posit.co/py/layouts/)
+![](pictures/tabs.png){ width=70% fig-align="center"}
+
+## Multi-Page Example: Summary
+- Tools to create multi-page layouts: `ui.nav_panel`, `ui.page_navbar`, and `navset_card_underline()`
+- UI elements can be nested to clean them up 
+
+## Exercise
+
+
+:::: {.columns}
+
+::: {.column width="60%"}
+ 
+- **Exercise**: add to `page2` to the multi-page example that looks like the following:
+![](pictures/largest-penguin-exercise.png){ width=90% fig-align="center"}
+
+:::
+
+::: {.column width="50%"}
+1. UI-side: define a new UI element called `page2`, based on `page1`
+2. UI-side: add a `ui.card()` with title ("Penguins sorted by body mass")
+3. Server-side: add a `render` function that returns `df[["species", "island", "body_mass_g"]].sort_values(by=['body_mass_g'])`
+:::
+
+::::
+ 
+
+
+
+## Whole Lecture Summary 
+- We've covered 3 ways to make your dashboard more user-friendly and look better
+- **Conditional UI**: hide content depending on user selection
+- **Dynamic UI**: let UI "react" to user selection or server-side input
+- **Custom UI layouts**: improve readability and make your app easier to navigate

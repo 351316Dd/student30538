@@ -1,0 +1,166 @@
+---
+title: "Mini-Lesson 6: Lambda Functions"
+author: "Vitor Silveira"
+format:
+  revealjs:
+    slide-number: true
+    chalkboard: false 
+    preview-links: auto
+    footer: "Lambda Functions"
+    css: styles.css
+execute:
+  eval: true
+  echo: true
+---
+
+## Intro: Lambda Functions
+
+- What is a Lambda function?
+- How to create a Lambda function
+- When to use a Lambda function
+- When **not** to use a Lambda function
+
+
+## What is a Lambda Function?
+
+- It is a small, anonymous function
+- Can have **any number of arguments** but only **one expression**
+
+```{python}
+#lambda arguments: expression
+```
+
+## How to create a Lambda function
+
+- Example 1: Simple Operations
+
+```{python}
+add = lambda x, y: x + y
+print(add(5, 3))
+```
+
+- Example 2: With High-Order Functions such as map() or filter()
+
+```{python}
+# Using map()
+numbers = [1, 2, 3, 4, 5]
+squared = list(map(lambda x: x**2, numbers))
+print(squared)  # Output: [1, 4, 9, 16, 25]
+
+# Using filter()
+even_numbers = list(filter(lambda x: x % 2 == 0, numbers))
+print(even_numbers)  # Output: [2, 4]
+```
+
+## When to use a Lambda function
+
+1. For simple operations, calculations, and simple data manipulation
+2. When the function is needed only **temporarily** or in one place (i.e. we are not going to use it multiple times)
+3. Functional programming: Along with functions that another function is passed as an argument (map, filter, sorted, reduce, etc)
+
+## Practical example
+
+```{python}
+# Without Lambda Functions
+def myfunc_no_lambda(n):
+    def multiplier(a):
+        return a * n
+    return multiplier
+
+mytripler1 = myfunc_no_lambda(3)
+
+print(mytripler1(12))
+
+# With Lambda Functions
+def myfunc_with_lambda(n):
+  return lambda a : a * n
+
+mytripler2 = myfunc_with_lambda(3)
+
+print(mytripler2(12))
+```
+
+## Lambda Functions & Web Scraping
+
+- Lambda functions can be quite useful when we are looking for specific information in web scraping projects
+
+## Example 1
+
+```{python}
+from bs4 import BeautifulSoup
+
+html_doc = """
+<html>
+  <body>
+    <p>Python is a great programming language.</p>
+    <p>JavaScript is also popular.</p>
+    <p>Python can be used for web scraping.</p>
+  </body>
+</html>
+"""
+soup = BeautifulSoup(html_doc, 'html.parser')
+# Use lambda to find all <p> tags that contain the word "Python"
+python_paragraphs = soup.find_all('p', string=lambda text: 'Python' in text)
+
+for p in python_paragraphs:
+    print(p.text)
+
+```
+
+## Example 2
+
+```{python}
+
+html_doc = """
+<html>
+  <body>
+    <a href="https://www.example.com">Example Site</a>
+    <a href="https://www.another.com">Another Site</a>
+    <a href="https://example.org">Example Organization</a>
+  </body>
+</html>
+"""
+
+soup = BeautifulSoup(html_doc, 'html.parser')
+
+# Use lambda to find all <a> tags where href contains "example"
+example_links = soup.find_all('a', href=lambda href: href and 'example' in href)
+
+for link in example_links:
+    print(link['href'])
+```
+
+## When NOT to use Lambda functions
+
+1. For complex operations/data manipulation (i.e. require more than one expression)
+2. When the function will have to be used multiple times/in multiple different places
+3. When your code readability will improve from having comments/annotations
+
+- In all of this cases, use **regular** functions!
+
+# Thank you!
+
+<!--  Alternative YAML
+---
+  revealjs:
+    slide-number: true
+    chalkboard: false 
+    preview-links: auto
+    footer: "VSCode, Quarto, and Jupyter Workshop"
+  html:
+    toc: true
+    number-sections: true
+    html-math-method: katex
+  beamer:
+    theme: Madrid
+    colortheme: dolphin
+    fonttheme: structurebold
+    navigation: horizontal
+    section-titles: true
+  pdf:
+    documentclass: article
+    papersize: letter
+    toc: true
+    number-sections: true
+    colorlinks: true
+--- -->

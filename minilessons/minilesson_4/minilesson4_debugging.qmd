@@ -1,0 +1,265 @@
+---
+title: "Mini-Lesson 4: DeBugging"
+author: "Joaquin Pinto"
+format:
+  revealjs:
+    slide-number: true
+    chalkboard: false 
+    preview-links: auto
+    footer: "DeBugging"
+execute:
+  eval: true
+  echo: true
+---
+
+# Agenda
+
+- Reading error messages
+- Common Errors
+- De-Bugging Tips
+- Quarto/VS Code
+
+
+# Reading Error Messages
+
+---
+
+### Traceback
+
+- Start at the bottom: the last line usually gives the error type and description (e.g., `TypeError: unsupported operand type`)
+
+---
+
+### Example
+
+```{python}
+#| error: true
+
+def calculate_total(value_1, value_2):
+    return value_1 + value_2
+
+# This will cause the TypeError
+result = calculate_total(10, "twenty")
+print(result)
+```
+
+# Common Python Errors
+
+---
+
+### Syntax Error
+
+- Missing closing parentheses, brackets, or quotes:
+
+```{python}
+#| error: true
+
+print("Hello World  # Incorrect
+print("Hello World")  # Correct
+```
+
+---
+
+### Indentation Error
+- Indentation errors in loops or conditionals:
+```{python}
+#| error: true
+
+for i in range(5):
+print(i)  # Incorrect: no indentation
+
+for i in range(5):
+    print(i)  # Correct
+```
+
+---
+
+**Logical Error**: 'and' vs '&' in element-wise comparisons:
+
+```{python}
+#| echo: false
+
+import pandas as pd
+```
+
+```{python}
+#| error: true
+
+df = pd.DataFrame({'A': [0, 1, 2], 'B': [5, 6, 7]})
+
+df[(df['A'] > 1) and (df['B'] > 2)]  # Incorrect
+df[(df['A'] > 1) & (df['B'] > 2)]  # Correct
+```
+
+---
+
+### AttributeError
+
+- Using a wrong method (`.average()` on a DataFrame):
+```{python}
+#| error: true
+
+df['A'].average()  # Incorrect, should use df.mean()
+```
+
+---
+
+**KeyError**: access a column that doesn’t exist
+```{python}
+#| error: true
+
+df['C']  # KeyError, C is not in the DataFrame
+```
+
+---
+
+### Quarto Rendering Errors
+
+- For Quarto you must check the terminal for error messages
+
+![](images/Quarto_yaml.png)
+
+# Debugging Techniques
+
+---
+
+### Use ChatGPT
+
+- Copy-paste errors into ChatGPT for help. Example:
+
+```
+TypeError: can't multiply sequence by non-int of type 'float'
+```
+
+![](images/ChatGPT.png)
+
+---
+
+### Print Statements
+
+- Use `print()` to output variable states at different points in your code
+```{python}
+def multiplier(a, b, c):
+  """
+  Multiply each variable by each other in order then sum
+  """
+  mult_1 = a * b
+  mult_2 = a ** c
+  mult_3 = b * c
+
+  return mult_1 + mult_2 + mult_3
+
+print (multiplier(2, 3, 5))
+```
+
+*That's wrong, we were expecting 6 + 10 + 15 = 21*
+
+---
+
+### Print Statements
+
+```{python}
+def multiplier(a, b, c):
+  """
+  Multiply each variable by each other in order then sum
+  """
+  mult_1 = a * b
+  print(f"mult_1 = {mult_1}")
+  mult_2 = a ** c
+  print(f"mult_2 = {mult_2}")
+  mult_3 = b * c
+  print(f"mult_3 = {mult_3}")
+
+  return mult_1 + mult_2 + mult_3
+
+print (multiplier(2, 3, 5))
+```
+
+*Looks like our issue is in mult_2*
+
+---
+
+::: {.callout-caution}
+
+**Remember to delete your print statements after finding your error**
+:::
+
+---
+
+### Isolate the Error
+
+- Comment or remove sections to isolate the cause.
+
+- This works in python and in Quarto
+
+- Once you know where your error is you can work on just that part
+
+- Look at your error so you can find the line where it is occuring
+
+---
+
+::: {.callout-tip}
+Try not to make your code too long, split it up if the line is too long
+
+**Use Code Chunks** (separate ```{python} sections)
+
+- this will help you isolate faster
+
+- writing all your code in one spot makes it harder to find where your issue is
+:::
+
+---
+
+### Using Built-In Functions
+
+- `type()`, `dir()`, and `help()` to understand object properties and methods
+```{python}
+type("my_var")  # Check the type of variable
+help(sum)  # View documentation
+```
+
+---
+
+### Log File
+
+- Use `quarto preview my-file.qmd --debug`
+
+- This will go line by line and find errors at the exact spot where they occur
+
+- add `to create error_log.log` to save to a text file for revising
+
+---
+
+### Explain to a "Rubber Duck"
+
+![](images/RubberDucking.jpg)
+
+- Explaining code to an object forces clarity
+
+- Go into detail but explain in simple words
+
+- If you have an actual person to talk to that probably works better
+
+---
+
+::: {.callout-tip}
+Use the correct Code Style techniques from last week and recreate errors with the Reproducible Examples method
+:::
+
+# Recap
+
+- Practice recognizing and reading error messages 
+  
+  - Python errors will be in the interpreter
+
+  - Quarto errors will be in the terminal
+
+- Plan your code ahead of time, set yourself up to easily debug
+
+- Find the spot of your error
+
+  - print statements
+  
+  - isolate your error
+  
+- Use ChatGPT or VS Code debugging

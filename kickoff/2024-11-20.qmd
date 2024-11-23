@@ -1,0 +1,57 @@
+---
+title: "Kickoff"
+date: today
+date-format: long
+format: 
+    beamer:
+        echo: true
+        toc: false
+        aspectratio: 169
+        theme: default
+        header-includes: \renewcommand{\tightlist}{\setlength{\itemsep}{5ex}\setlength{\parskip}{0pt}}
+            \setbeamertemplate{footline}[frame number] 
+---
+
+## Shiny
+
+* Sol asked “can we use `if else` for conditional UI?” 
+    * Answer: I haven’t been able to find anything that can do this. So instead of "if A then X else Y", need "if A then X; if not A then Y". I am not sure why shiny is set up like this. 
+* Shuping asked “what’s the difference between render table and render data_frame?” 
+    * Answer from render table documentations: “Consider using data_frame instead of this renderer, as it provides high performance virtual scrolling, built-in filtering and sorting, and a better default appearance. This renderer may still be helpful if you use pandas styling features that are not currently supported by data_frame.”
+
+
+## PS6
+
+* The problem set requests Altair and we prefer Altair
+* However, at least one student has found that Altair isn’t playing nicely with Shiny. If you are one of these students, we give full credit to someone who does PS6 in matplotlib.
+
+
+## Final Project
+
+* A student asked what we are looking for in terms of research design and if correlations are OK. 
+* We don’t care at all about research design or causality in the sense that they can easily get 100% with only looking at correlations. However, writeup should be clear about the limitations of the exhibits (e.g. reasons why the correlation they show might not warrant a causal conclusion).
+
+## Course Feedback
+
+* Please do the course evaluations. We read them carefully. 
+* Live lunch Tue Dec 17 12:30PM with food from Plein Air. Sign up **[here](https://docs.google.com/spreadsheets/d/1LBVec0wjcUKp1ve1XPaqqY3E1aQoTAAUIqt6iQ-VB8Q/edit?gid=0#gid=0)**
+
+## Already-planned changes
+
+We already have gotten a lot of feedback, which is great! Some fixes that are already in flight include:
+
+* providing an optional ''dap1 refresher'' assignment before the quarter begins
+\vspace{-1ex}
+* harmonizing software between dap1 and dap2 
+\vspace{-1ex}
+* installing all the packages for the whole course and providing additional support in week1
+\vspace{-1ex}
+* adding office hours every week after lab 
+\vspace{-1ex}
+* moving git earlier 
+
+It is of course helpful to reiterate these points but even more helpful to make new points beyond these. 
+
+## Shiny 330PM Thu section
+* "Can we use `FALSE` in Python?"
+    * Answer: No. shiny_3 lecture had a typo (we converted from an R lecture last year). Slides should have said `False`. We apologize for the error.

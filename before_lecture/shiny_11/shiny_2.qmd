@@ -222,7 +222,7 @@ So far we have seen `@reactive.calc`. Next lecture, we will also cover `@reactiv
 ```{python}
 @render.plot
 def my_hist():
-    sample = np.random.normal(input.n(), 20, 100)
+    sample = np.random.normal(input.mu(), 20, 100)
     fig, ax = plt.subplots()
     ax.hist(sample, bins=30, color='blue', alpha=0.7)
     return fig

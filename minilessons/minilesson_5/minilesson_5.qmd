@@ -1,0 +1,81 @@
+---
+title: "Mini-Lesson 5: Virtual Environment"
+author: "Dema Therese"
+format:
+  revealjs:
+    slide-number: true
+    chalkboard: false 
+    preview-links: auto
+    footer: "Virtual Environment"
+execute:
+  eval: true
+  echo: true
+---
+
+## 
+#### Objectives
+- What is a Virtual Environment?
+- Create, Activate, & Deactivate Virtual Environments
+- Use .gitignore & requirements.txt
+
+<br />
+
+#### What is an Environment?
+An "environment" in Python is the context in which a Python program runs that consists of an interpreter and any number of installed packages. <br />
+*Read more about environments [**here**.](https://code.visualstudio.com/docs/python/environments)*
+
+## Virtual Environments
+- Stored in a .venv or venv folder within the project
+- Packages installed in the environment are saved in this folder
+- Environment is isolated from other projects, don’t interfere with each other
+- **Easy to delete and recreate** from scratch
+- **Project code** stays **outside** the environment folder
+- **Not portable** — recreate the environment at the new location
+
+## 
+![](create.pptx.png)
+
+##
+![](other.pptx.png)
+
+##
+#### .gitignore
+- *Generate*: <br />
+`code .gitignore`. <br />
+In `.gitignore` add `.venv/` <br />
+- *Use*: Excludes unnecessary files from being pushed
+
+<br />
+
+#### requirements.txt
+- *Generate*: `pip freeze > requirements.txt`
+- *Use*: Tracks installed packages and their versions. 
+- *Install*: `pip install -r requirements.txt`
+
+# Thank you!
+
+<!--  Alternative YAML
+---
+  revealjs:
+    slide-number: true
+    chalkboard: false 
+    preview-links: auto
+    footer: "VSCode, Quarto, and Jupyter Workshop"
+  html:
+    toc: true
+    number-sections: true
+    html-math-method: katex
+  beamer:
+    theme: Madrid
+    colortheme: dolphin
+    fonttheme: structurebold
+    navigation: horizontal
+    section-titles: true
+  pdf:
+    documentclass: article
+    papersize: letter
+    toc: true
+    number-sections: true
+    colorlinks: true
+--- -->
+
